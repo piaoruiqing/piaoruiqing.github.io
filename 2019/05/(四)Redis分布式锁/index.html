@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Redis之分布式锁的实现方案 - 如何优雅地实现分布式锁(JAVA)  关键词 分布式锁: 是控制分布式系统之间同步访问共享资源的一种方式。 spring-data-redis: Spring针对redis的封装, 配置简单, 提供了与Redis存储交互的抽象封装, 十分优雅, 也极具扩展性, 推荐读一读源码 Lua: Lua 是一种轻量小巧的脚本语言, 可在redis执行.  前言本文阐述了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(四)Redis分布式锁">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="Redis之分布式锁的实现方案 - 如何优雅地实现分布式锁(JAVA)  关键词 分布式锁: 是控制分布式系统之间同步访问共享资源的一种方式。 spring-data-redis: Spring针对redis的封装, 配置简单, 提供了与Redis存储交互的抽象封装, 十分优雅, 也极具扩展性, 推荐读一读源码 Lua: Lua 是一种轻量小巧的脚本语言, 可在redis执行.  前言本文阐述了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
+<meta property="article:published_time" content="2019-09-05T14:44:39.000Z">
+<meta property="article:modified_time" content="2019-09-05T14:44:39.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>(四)Redis分布式锁</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/05/(%E4%B8%80)Redis%E5%85%A5%E9%97%A8/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&text=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&is_video=false&description=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=(四)Redis分布式锁&body=Check out this article: https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&name=(四)Redis分布式锁&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&t=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关键词"><span class="toc-number">1.</span> <span class="toc-text">关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">2.</span> <span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#需求"><span class="toc-number">2.1.</span> <span class="toc-text">需求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#方案"><span class="toc-number">2.2.</span> <span class="toc-text">方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现"><span class="toc-number">3.</span> <span class="toc-text">实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#依赖引入"><span class="toc-number">3.1.</span> <span class="toc-text">依赖引入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#配置RedisTemplate"><span class="toc-number">3.2.</span> <span class="toc-text">配置RedisTemplate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#简单的分布式锁实现"><span class="toc-number">3.3.</span> <span class="toc-text">简单的分布式锁实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#早期版本spring-data-redis分布式锁实现及注意事项"><span class="toc-number">3.4.</span> <span class="toc-text">早期版本spring-data-redis分布式锁实现及注意事项</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#优化进阶"><span class="toc-number">4.</span> <span class="toc-text">优化进阶</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#优化一-自动解锁及重试"><span class="toc-number">4.1.</span> <span class="toc-text">优化一 (自动解锁及重试)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#分布式锁抽象类"><span class="toc-number">4.1.1.</span> <span class="toc-text">分布式锁抽象类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#封装Redis分布式锁"><span class="toc-number">4.1.2.</span> <span class="toc-text">封装Redis分布式锁</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#加锁方法实现"><span class="toc-number">4.1.3.</span> <span class="toc-text">加锁方法实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#优化二-自定义异常"><span class="toc-number">4.2.</span> <span class="toc-text">优化二 (自定义异常)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#加锁方法实现-1"><span class="toc-number">4.2.1.</span> <span class="toc-text">加锁方法实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#优化三-优雅地使用注解"><span class="toc-number">4.3.</span> <span class="toc-text">优化三 (优雅地使用注解)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#定义注解"><span class="toc-number">4.3.1.</span> <span class="toc-text">定义注解</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#切面实现"><span class="toc-number">4.3.2.</span> <span class="toc-text">切面实现</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#扩展"><span class="toc-number">5.</span> <span class="toc-text">扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">6.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">7.</span> <span class="toc-text">参考文献</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        (四)Redis分布式锁
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-09-05T14:44:39.000Z" itemprop="datePublished">2019-09-05</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <blockquote>
+<p>Redis之分布式锁的实现方案 - 如何优雅地实现分布式锁(JAVA)</p>
+</blockquote>
+<h2 id="关键词"><a href="#关键词" class="headerlink" title="关键词"></a>关键词</h2><ul>
+<li><code>分布式锁</code>: 是控制<a href="https://zh.wikipedia.org/wiki/分布式系统" target="_blank" rel="noopener">分布式系统</a>之间同步访问共享<a href="https://zh.wikipedia.org/wiki/资源" target="_blank" rel="noopener">资源</a>的一种方式。</li>
+<li><code>spring-data-redis</code>: Spring针对redis的封装, 配置简单, 提供了与Redis存储交互的抽象封装, 十分优雅, 也极具扩展性, 推荐读一读源码</li>
+<li><code>Lua</code>: Lua 是一种轻量小巧的脚本语言, 可在redis执行.</li>
+</ul>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文阐述了Redis分布式锁的一种简单JAVA实现及优化进阶, 实现了自动解锁、自定义异常、重试、注解锁等功能, 尝试用更优雅简洁的代码完成分布式锁.</p>
+<h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><ul>
+<li>互斥性: 在分布式系统环境下, 一个锁只能被一个线程持有.</li>
+<li>高可用: 不会发生死锁、即使客户端崩溃也可超时释放锁.</li>
+<li>非阻塞: 获取锁失败即返回. </li>
+</ul>
+<h3 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h3><p>Redis具有极高的性能, 且其命令对分布式锁支持友好, 借助<code>SET</code>命令即可实现加锁处理.</p>
+<blockquote>
+<p><code>SET</code></p>
+<ul>
+<li><code>EX</code> <em>seconds</em> – Set the specified expire time, in seconds.</li>
+<li><code>PX</code> <em>milliseconds</em> – Set the specified expire time, in milliseconds.</li>
+<li><code>NX</code> – Only set the key if it does not already exist.</li>
+<li><code>XX</code> – Only set the key if it already exist.</li>
+</ul>
+</blockquote>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><blockquote>
+<p>简单实现</p>
+</blockquote>
+<p>做法为set if not exist(如果不存在则赋值), redis命令为原子操作, 所以单独使用<code>set</code>命令时不用担心并发导致异常.</p>
+<p>具体代码实现如下: (<code>spring-data-redis:2.1.6</code>)</p>
+<h3 id="依赖引入"><a href="#依赖引入" class="headerlink" title="依赖引入"></a>依赖引入</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-data-redis<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.1.4.RELEASE<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="配置RedisTemplate"><a href="#配置RedisTemplate" class="headerlink" title="配置RedisTemplate"></a>配置RedisTemplate</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="meta">@ConditionalOnMissingBean</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> StringRedisTemplate <span class="title">stringRedisTemplate</span><span class="params">(RedisConnectionFactory factory)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    StringRedisSerializer keySerializer = <span class="keyword">new</span> StringRedisSerializer();</span><br><span class="line">    RedisSerializer&lt;?&gt; serializer = <span class="keyword">new</span> StringRedisSerializer();</span><br><span class="line">    StringRedisTemplate template = <span class="keyword">new</span> StringRedisTemplate();</span><br><span class="line">    template.setConnectionFactory(factory);</span><br><span class="line">    template.setKeySerializer(keySerializer);</span><br><span class="line">    template.setHashKeySerializer(keySerializer);</span><br><span class="line">    template.setValueSerializer(serializer);</span><br><span class="line">    template.setHashValueSerializer(serializer);</span><br><span class="line">    template.afterPropertiesSet();</span><br><span class="line">    <span class="keyword">return</span> template;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="简单的分布式锁实现"><a href="#简单的分布式锁实现" class="headerlink" title="简单的分布式锁实现"></a>简单的分布式锁实现</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * try lock</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> key       lock key</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> value     value</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> timeout   timeout</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> unit  	time unit</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Boolean <span class="title">tryLock</span><span class="params">(String key, String value, <span class="keyword">long</span> timeout, TimeUnit unit)</span> </span>&#123;      </span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上代码即完成了一个简单的分布式锁功能: </p>
+<p>其中<code>redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);</code> 即为执行redis命令:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">redis&gt;</span><span class="bash"> <span class="built_in">set</span> dlock:<span class="built_in">test</span>-try-lock a EX 10 NX</span></span><br><span class="line">OK</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> <span class="built_in">set</span> dlock:<span class="built_in">test</span>-try-lock a EX 10 NX</span></span><br><span class="line">null</span><br></pre></td></tr></table></figure>
+
+<h3 id="早期版本spring-data-redis分布式锁实现及注意事项"><a href="#早期版本spring-data-redis分布式锁实现及注意事项" class="headerlink" title="早期版本spring-data-redis分布式锁实现及注意事项"></a>早期版本<code>spring-data-redis</code>分布式锁实现及注意事项</h3><blockquote>
+<p>方法<code>Boolean setIfAbsent(K key, V value, long timeout, TimeUnit unit);</code>是在2.1版本中新增的, 早期版本中setIfAbsent无法同时指定过期时间, 若先使用<code>setIfAbsent</code>再设置key的过期时间, 会存在产生死锁的风险, 故旧版本中需要使用另外的写法进行实现. 以<code>spring-data-redis:1.8.20</code>为例</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * try lock</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> key       lock key</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> value     value</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> timeout   timeout</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> unit  	time unit</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Boolean <span class="title">tryLock</span><span class="params">(String key, String value, <span class="keyword">long</span> timeout, TimeUnit unit)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> redisTemplate.execute(<span class="keyword">new</span> RedisCallback&lt;Boolean&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Boolean <span class="title">doInRedis</span><span class="params">(RedisConnection connection)</span> <span class="keyword">throws</span> DataAccessException </span>&#123;</span><br><span class="line"></span><br><span class="line">            JedisCommands commands = (JedisCommands)connection.getNativeConnection();</span><br><span class="line">            String result = commands.set(key, value, <span class="string">"NX"</span>, <span class="string">"PX"</span>, unit.toMillis(timeout));</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="string">"OK"</span>.equals(result);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>spring-data-redis:1.8.20</code>默认redis客户端为<code>jedis</code>, 可通过<code>getNativeConnection</code>直接调用jedis方法进行操作. 新旧版本实现方式最终效果相同.</p>
+<h2 id="优化进阶"><a href="#优化进阶" class="headerlink" title="优化进阶"></a>优化进阶</h2><blockquote>
+<p>基于AOP实现分布式锁注解工具 - 不仅能用, 而且好用</p>
+</blockquote>
+<h3 id="优化一-自动解锁及重试"><a href="#优化一-自动解锁及重试" class="headerlink" title="优化一 (自动解锁及重试)"></a>优化一 (自动解锁及重试)</h3><blockquote>
+<p>自动解锁、重试: 上一节针对分布式锁的简单实现可满足基本需求, 但仍有较多可优化改进之处, 本小节将针对分布式锁自动解锁及重试进行优化</p>
+</blockquote>
+<h4 id="分布式锁抽象类"><a href="#分布式锁抽象类" class="headerlink" title="分布式锁抽象类"></a>分布式锁抽象类</h4><blockquote>
+<p>实现<code>AutoCloseable</code>接口, 可使用<code>try-with-resource</code>方便地完成自动解锁.</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * distributed lock</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DistributedLock</span> <span class="keyword">implements</span> <span class="title">AutoCloseable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(getClass());</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * release lock</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">abstract</span> <span class="keyword">public</span> <span class="keyword">void</span> <span class="title">release</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * (non-Javadoc)</span></span><br><span class="line"><span class="comment">     * @see java.lang.AutoCloseable#close()</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">close</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line"></span><br><span class="line">        LOGGER.debug(<span class="string">"distributed lock close , &#123;&#125;"</span>, <span class="keyword">this</span>.toString());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="封装Redis分布式锁"><a href="#封装Redis分布式锁" class="headerlink" title="封装Redis分布式锁"></a>封装Redis分布式锁</h4><blockquote>
+<p><code>RedisDistributedLock</code>是Redis分布式锁的抽象, 继承了<code>DistributedLock</code>并实现了unlock接口.</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * redis distributed lock</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: 2019/01/12 23:20</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RedisDistributedLock</span> <span class="keyword">extends</span> <span class="title">DistributedLock</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> RedisOperations&lt;String, String&gt; operations;</span><br><span class="line">    <span class="keyword">private</span> String key;</span><br><span class="line">    <span class="keyword">private</span> String value;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String COMPARE_AND_DELETE =		<span class="comment">// (一)</span></span><br><span class="line">        <span class="string">"if redis.call('get',KEYS[1]) == ARGV[1]\n"</span> +</span><br><span class="line">        <span class="string">"then\n"</span> +</span><br><span class="line">        <span class="string">"    return redis.call('del',KEYS[1])\n"</span> +</span><br><span class="line">        <span class="string">"else\n"</span> +</span><br><span class="line">        <span class="string">"    return 0\n"</span> +</span><br><span class="line">        <span class="string">"end"</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> operations</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> key</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> value</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">RedisDistributedLock</span><span class="params">(RedisOperations&lt;String, String&gt; operations, String key, String value)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.operations = operations;</span><br><span class="line">        <span class="keyword">this</span>.key = key;</span><br><span class="line">        <span class="keyword">this</span>.value = value;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * (non-Javadoc)</span></span><br><span class="line"><span class="comment">     * @see com.piaoruiqing.demo.distributed.lock.DistributedLock#release()</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">release</span><span class="params">()</span> </span>&#123;									<span class="comment">// (二)</span></span><br><span class="line">        List&lt;String&gt; keys = Collections.singletonList(key);</span><br><span class="line">        operations.execute(<span class="keyword">new</span> DefaultRedisScript&lt;String&gt;(COMPARE_AND_DELETE), keys, value);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">     * (non-Javadoc)</span></span><br><span class="line"><span class="comment">     * @see java.lang.Object#toString()</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"RedisDistributedLock [key="</span> + key + <span class="string">", value="</span> + value + <span class="string">"]"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): 通过Lua脚本进行解锁, 使<code>对比锁的值</code>+<code>删除</code>成为原子操作, 确保解锁操作的正确性. 简单来说就是防止<code>删了别人的锁</code>.<br>  例如: 线程A方法未执行完毕时锁超时了, 随后B线程也获取到了该锁(key相同), 但此时如果A线程方法执行完毕尝试解锁, 如果不比对value, 那么A将删掉B的锁, 这时候C线程又能加锁, 业务将产生更严重的混乱.(不要过分依赖分布式锁, 在数据一致性要求较高的情况下, 数据库层面也要进行一定的处理, 例如唯一键约束、事务等来确保数据的正确)</li>
+<li>(二): 使用<code>RedisOperations</code>执行Lua脚本进行解锁操作.</li>
+<li>可参阅<a href="https://redis.io/commands/set" target="_blank" rel="noopener">redis官方文档</a></li>
+</ul>
+<h4 id="加锁方法实现"><a href="#加锁方法实现" class="headerlink" title="加锁方法实现"></a>加锁方法实现</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> key           lock key</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> timeout       timeout</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> retries       number of retries</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> waitingTime   retry interval</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment"> * <span class="doctag">@throws</span> InterruptedException</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> DistributedLock <span class="title">acquire</span><span class="params">(String key, <span class="keyword">long</span> timeout, <span class="keyword">int</span> retries, <span class="keyword">long</span> waitingTime)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> String value </span><br><span class="line">        = RandomStringUtils.randomAlphanumeric(<span class="number">4</span>) + System.currentTimeMillis(); <span class="comment">// (一)</span></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        Boolean result </span><br><span class="line">            = stringRedisTemplate.opsForValue().setIfAbsent(key, value, timeout, TimeUnit.MILLISECONDS); <span class="comment">// (二)</span></span><br><span class="line">        <span class="keyword">if</span> (result) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> RedisDistributedLock(stringRedisTemplate, key, value);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (retries &gt; NumberUtils.INTEGER_ZERO) &#123;</span><br><span class="line">            TimeUnit.MILLISECONDS.sleep(waitingTime);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(Thread.currentThread().isInterrupted())&#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> (retries-- &gt; NumberUtils.INTEGER_ZERO);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): 锁值要保证唯一, 使用4位随机字符串+时间戳基本可满足需求<br>  注: <code>UUID.randomUUID()</code>在高并发情况下性能不佳.</li>
+<li>(二): 尝试加锁, 代码中是2.1版本的做法, 早起版本参考上一节的实现.</li>
+</ul>
+<p>此代码已经可以满足自动解锁和重试的需求了, 使用方法: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 根据key加锁, 超时时间10000ms, 重试2次, 重试间隔500ms</span></span><br><span class="line"><span class="keyword">try</span>(DistributedLock lock = redisLockService.acquire(key, <span class="number">10000</span>, <span class="number">2</span>, <span class="number">500</span>);)&#123;</span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但还可以再优雅一点, 将模板代码封装起来, 可支持<em>Lambda</em>表达式:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * lock handler</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@FunctionalInterface</span>				<span class="comment">// (一)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">LockHandler</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * the logic you want to execute</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Throwable</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">     <span class="function">T <span class="title">handle</span><span class="params">()</span> <span class="keyword">throws</span> Throwable</span>;	<span class="comment">// (二)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): 定义函数式接口, 将业务逻辑放入<em>Lambda</em>表达式使代码更加简洁.</li>
+<li>(二): 业务中的异常不建议在分布式锁中处理, 直接抛出来更合理.</li>
+</ul>
+<p>使用<code>LockHandler</code>完成加锁的实现: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">T <span class="title">tryLock</span><span class="params">(String key, LockHandler&lt;T&gt; handler, <span class="keyword">long</span> timeout, <span class="keyword">boolean</span> autoUnlock, <span class="keyword">int</span> retries, <span class="keyword">long</span> waitingTime)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> (DistributedLock lock = <span class="keyword">this</span>.acquire(key, timeout, retries, waitingTime);) &#123;</span><br><span class="line">        <span class="keyword">if</span> (lock != <span class="keyword">null</span>) &#123;</span><br><span class="line">            LOGGER.debug(<span class="string">"get lock success, key: &#123;&#125;"</span>, key);</span><br><span class="line">            <span class="keyword">return</span> handler.handle();</span><br><span class="line">        &#125;</span><br><span class="line">        LOGGER.debug(<span class="string">"get lock fail, key: &#123;&#125;"</span>, key);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此时可以通过比较优雅的方式使用分布式锁来完成编码: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testTryLock</span><span class="params">()</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> String key = <span class="string">"dlock:test-try-lock"</span>;</span><br><span class="line">    AnyObject anyObject = redisLockService.tryLock(key, () -&gt; &#123;</span><br><span class="line">        <span class="comment">// do something</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> AnyObject();</span><br><span class="line">    &#125;, <span class="number">10000</span>, <span class="keyword">true</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+
+
+<h3 id="优化二-自定义异常"><a href="#优化二-自定义异常" class="headerlink" title="优化二 (自定义异常)"></a>优化二 (自定义异常)</h3><blockquote>
+<p>自定义异常: 前文中针对分布式锁的封装可满足多数业务场景, 但是考虑这样一种情况, 如果业务本身会返回<code>NULL</code>当前的实现方式可能会存在错误的处理, 因为获取锁失败也会返回<code>NULL</code>. 避免返回<code>NULL</code>固然是一种解决方式, 但无法满足所有的场景, 此时支持自定义异常或许是个不错的选择.</p>
+</blockquote>
+<p>实现起来很容易, 在原代码的基础之上增加<code>onFailure</code>参数, 如果锁为空直接抛出异常即可. </p>
+<h4 id="加锁方法实现-1"><a href="#加锁方法实现-1" class="headerlink" title="加锁方法实现"></a>加锁方法实现</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">T <span class="title">tryLock</span><span class="params">(String key, LockHandler&lt;T&gt; handler, <span class="keyword">long</span> timeout, <span class="keyword">boolean</span> autoUnlock, <span class="keyword">int</span> retries, <span class="keyword">long</span> waitingTime, Class&lt;? extends RuntimeException&gt; onFailure)</span> <span class="keyword">throws</span> Throwable </span>&#123;	<span class="comment">// (一)</span></span><br><span class="line">    <span class="keyword">try</span> (DistributedLock lock = <span class="keyword">this</span>.getLock(key, timeout, retries, waitingTime);) &#123;</span><br><span class="line">        <span class="keyword">if</span> (lock != <span class="keyword">null</span>) &#123;</span><br><span class="line">            LOGGER.debug(<span class="string">"get lock success, key: &#123;&#125;"</span>, key);</span><br><span class="line">            <span class="keyword">return</span> handler.handle();</span><br><span class="line">        &#125;</span><br><span class="line">        LOGGER.debug(<span class="string">"get lock fail, key: &#123;&#125;"</span>, key);</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> != onFailure) &#123;</span><br><span class="line">            <span class="keyword">throw</span> onFailure.newInstance();	<span class="comment">// (二)</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): <code>Class&lt;? extends RuntimeException&gt;</code>限定<code>onFailure</code>必须是<code>RuntimeException</code>或其子类. 笔者认为使用<code>RuntimeException</code>在语义上更容易理解. 如有需要使用其他异常也未尝不可(如获取锁失败需要统一处理等情况).</li>
+<li>(二): 反射</li>
+</ul>
+<h3 id="优化三-优雅地使用注解"><a href="#优化三-优雅地使用注解" class="headerlink" title="优化三 (优雅地使用注解)"></a>优化三 (优雅地使用注解)</h3><blockquote>
+<p>结合APO优雅地使用注解完成分布式锁: </p>
+</blockquote>
+<h4 id="定义注解"><a href="#定义注解" class="headerlink" title="定义注解"></a>定义注解</h4><blockquote>
+<p>为了减小篇幅折叠部分注释</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * distributed lock</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: 2019/01/12 23:15</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="meta">@Target</span>(ElementType.METHOD)</span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> DistributedLockable &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** timeout of the lock */</span></span><br><span class="line">    <span class="function"><span class="keyword">long</span> <span class="title">timeout</span><span class="params">()</span> <span class="keyword">default</span> 5L</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** time unit */</span></span><br><span class="line">    <span class="function">TimeUnit <span class="title">unit</span><span class="params">()</span> <span class="keyword">default</span> TimeUnit.MILLISECONDS</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** number of retries */</span></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">retries</span><span class="params">()</span> <span class="keyword">default</span> 0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** interval of each retry */</span></span><br><span class="line">    <span class="function"><span class="keyword">long</span> <span class="title">waitingTime</span><span class="params">()</span> <span class="keyword">default</span> 0L</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** key prefix */</span></span><br><span class="line">    <span class="function">String <span class="title">prefix</span><span class="params">()</span> <span class="keyword">default</span> ""</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** parameters that construct a key */</span></span><br><span class="line">    String[] argNames() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** construct a key with parameters */</span></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">argsAssociated</span><span class="params">()</span> <span class="keyword">default</span> <span class="keyword">true</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** whether unlock when completed */</span></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">autoUnlock</span><span class="params">()</span> <span class="keyword">default</span> <span class="keyword">true</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** throw an runtime exception while fail to get lock */</span></span><br><span class="line">    Class&lt;? extends RuntimeException&gt; onFailure() <span class="keyword">default</span> NoException<span class="class">.<span class="keyword">class</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** no exception */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">NoException</span> <span class="keyword">extends</span> <span class="title">RuntimeException</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = -<span class="number">7821936618527445658L</span>;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>timeout</code>: 超时时间</li>
+<li><code>unit</code>: 时间单位</li>
+<li><code>retries</code>: 重试次数</li>
+<li><code>waitingTime</code>: 重试间隔时间</li>
+<li><code>prefix</code>: key前缀, 默认为<code>包名</code>+<code>类名</code>+<code>方法名</code></li>
+<li><code>argNames</code>: 组成key的参数</li>
+</ul>
+<p>注解可使用在方法上, 需要注意的是, 本文注解通过spring AOP实现, 故对象内部方法间调用将无效.</p>
+<h4 id="切面实现"><a href="#切面实现" class="headerlink" title="切面实现"></a>切面实现</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * distributed lock aspect</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: 2019/02/02 22:35</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Order</span>(<span class="number">10</span>)	<span class="comment">// (一)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DistributedLockableAspect</span> <span class="keyword">implements</span> <span class="title">KeyGenerator</span> </span>&#123;	<span class="comment">// (二)</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(getClass());</span><br><span class="line">    <span class="meta">@Resource</span></span><br><span class="line">    <span class="keyword">private</span> RedisLockClient redisLockClient;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * &#123;<span class="doctag">@link</span> DistributedLockable&#125;</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Pointcut</span>(value = <span class="string">"execution(* *(..)) &amp;&amp; @annotation(com.github.piaoruiqing.dlock.annotation.DistributedLockable)"</span>)</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">distributedLockable</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> joinPoint</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> lockable</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Throwable</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Around</span>(value = <span class="string">"distributedLockable() &amp;&amp; @annotation(lockable)"</span>)</span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">around</span><span class="params">(ProceedingJoinPoint joinPoint, DistributedLockable lockable)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">        <span class="keyword">long</span> start = System.nanoTime();</span><br><span class="line">        <span class="keyword">final</span> String key = <span class="keyword">this</span>.generate(joinPoint, lockable.prefix(), lockable.argNames(), lockable.argsAssociated()).toString();</span><br><span class="line">        Object result = redisLockClient.tryLock(</span><br><span class="line">            key, () -&gt; &#123;</span><br><span class="line">                <span class="keyword">return</span> joinPoint.proceed();</span><br><span class="line">            &#125;, </span><br><span class="line">            lockable.unit().toMillis(lockable.timeout()), lockable.autoUnlock(), </span><br><span class="line">            lockable.retries(), lockable.unit().toMillis(lockable.waitingTime()),</span><br><span class="line">            lockable.onFailure()</span><br><span class="line">        );</span><br><span class="line">        <span class="keyword">long</span> end = System.nanoTime();</span><br><span class="line">        LOGGER.debug(<span class="string">"distributed lockable cost: &#123;&#125; ns"</span>, end - start);</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): 切面优先级</li>
+<li>(二): <code>KeyGenerator</code>为自定义的key生成策略, 使用 <code>prefix+argName+arg</code>作为key, 具体实现见<a href="https://github.com/piaoruiqing/distributed-lock" target="_blank" rel="noopener">源码</a>.</li>
+</ul>
+<p>此时可以通过注解的方式使用分布式锁, 这种方式对代码入侵较小, 且简洁.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@DistributedLockable</span>(</span><br><span class="line">    argNames = &#123;<span class="string">"anyObject.id"</span>, <span class="string">"anyObject.name"</span>, <span class="string">"param1"</span>&#125;,</span><br><span class="line">    timeout = <span class="number">20</span>, unit = TimeUnit.SECONDS, </span><br><span class="line">    onFailure = RuntimeException<span class="class">.<span class="keyword">class</span></span></span><br><span class="line"><span class="class">    )</span></span><br><span class="line"><span class="class"><span class="title">public</span> <span class="title">Long</span> <span class="title">distributedLockableOnFaiFailure</span>(<span class="title">AnyObject</span> <span class="title">anyObject</span>, <span class="title">String</span> <span class="title">param1</span>, <span class="title">Object</span> <span class="title">param2</span>, <span class="title">Long</span> <span class="title">timeout</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        TimeUnit.SECONDS.sleep(timeout);</span><br><span class="line">        LOGGER.info(<span class="string">"distributed-lockable: "</span> + System.nanoTime());</span><br><span class="line">    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> System.nanoTime();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><p>分布式锁的实现有多种方式, 可根据实际场景和需求选择不同的介质进行实现: </p>
+<ul>
+<li>Redis: 性能高, 对分布式锁支持友好, 实现简单, 多数场景下表现较好.</li>
+<li>Zookeeper: 可靠性较高, 对分布式锁支持友好, 实现较复杂但有现成的实现可以使用.</li>
+<li>数据库: 实现简单, 可使用<code>乐观锁</code>/<code>悲观锁</code>实现, 性能一般, 高并发场景下不推荐</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本文阐述了Redis分布式锁的JAVA实现, 完成了自动解锁、自定义异常、重试、注解锁等功能, 源码见<a href="https://github.com/piaoruiqing/distributed-lock" target="_blank" rel="noopener">地址</a>.</p>
+<p>本实现还有诸多可以优化之处, 如: </p>
+<ul>
+<li>重入锁的实现</li>
+<li>优化重试策略为订阅Redis事件: 订阅Redis事件可以进一步优化锁的性能, 可通过wait+notifyAll来替代文中的sleep.</li>
+</ul>
+<p>篇幅有限, 后续再行阐述.</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://redis.io/topics/distlock" target="_blank" rel="noopener">https://redis.io/topics/distlock</a></li>
+<li><a href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html" target="_blank" rel="noopener">https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html</a></li>
+</ul>
+<p><strong>欢迎关注公众号(代码如诗):</strong> </p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/business_card.jpg" alt="代码如诗"></p>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关键词"><span class="toc-number">1.</span> <span class="toc-text">关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">2.</span> <span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#需求"><span class="toc-number">2.1.</span> <span class="toc-text">需求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#方案"><span class="toc-number">2.2.</span> <span class="toc-text">方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现"><span class="toc-number">3.</span> <span class="toc-text">实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#依赖引入"><span class="toc-number">3.1.</span> <span class="toc-text">依赖引入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#配置RedisTemplate"><span class="toc-number">3.2.</span> <span class="toc-text">配置RedisTemplate</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#简单的分布式锁实现"><span class="toc-number">3.3.</span> <span class="toc-text">简单的分布式锁实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#早期版本spring-data-redis分布式锁实现及注意事项"><span class="toc-number">3.4.</span> <span class="toc-text">早期版本spring-data-redis分布式锁实现及注意事项</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#优化进阶"><span class="toc-number">4.</span> <span class="toc-text">优化进阶</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#优化一-自动解锁及重试"><span class="toc-number">4.1.</span> <span class="toc-text">优化一 (自动解锁及重试)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#分布式锁抽象类"><span class="toc-number">4.1.1.</span> <span class="toc-text">分布式锁抽象类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#封装Redis分布式锁"><span class="toc-number">4.1.2.</span> <span class="toc-text">封装Redis分布式锁</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#加锁方法实现"><span class="toc-number">4.1.3.</span> <span class="toc-text">加锁方法实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#优化二-自定义异常"><span class="toc-number">4.2.</span> <span class="toc-text">优化二 (自定义异常)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#加锁方法实现-1"><span class="toc-number">4.2.1.</span> <span class="toc-text">加锁方法实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#优化三-优雅地使用注解"><span class="toc-number">4.3.</span> <span class="toc-text">优化三 (优雅地使用注解)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#定义注解"><span class="toc-number">4.3.1.</span> <span class="toc-text">定义注解</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#切面实现"><span class="toc-number">4.3.2.</span> <span class="toc-text">切面实现</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#扩展"><span class="toc-number">5.</span> <span class="toc-text">扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">6.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">7.</span> <span class="toc-text">参考文献</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&text=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&is_video=false&description=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=(四)Redis分布式锁&body=Check out this article: https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&title=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&name=(四)Redis分布式锁&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/&t=(四)Redis分布式锁" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

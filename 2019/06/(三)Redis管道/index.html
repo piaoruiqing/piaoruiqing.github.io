@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Redis之管道的使用 原文地址:  https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blog&#x2F;2019&#x2F;06&#x2F;24&#x2F;redis管道  关键词Redis Pipelining: 客户端可以向服务器发送多个请求而无需等待回复, 最后只需一步即可读取回复. RTT(Round Trip Time): 往返时间. 为什么要用管道Redis是使用client-server模型和Request&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(三)Redis管道">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="Redis之管道的使用 原文地址:  https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blog&#x2F;2019&#x2F;06&#x2F;24&#x2F;redis管道  关键词Redis Pipelining: 客户端可以向服务器发送多个请求而无需等待回复, 最后只需一步即可读取回复. RTT(Round Trip Time): 往返时间. 为什么要用管道Redis是使用client-server模型和Request&#x2F;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.piaoruiqing.com/markdown//pipeline_iops.png">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
+<meta property="article:published_time" content="2019-09-05T14:44:44.000Z">
+<meta property="article:modified_time" content="2019-09-05T14:44:44.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.piaoruiqing.com/markdown//pipeline_iops.png">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>(三)Redis管道</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/05/(%E5%9B%9B)Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&text=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&is_video=false&description=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=(三)Redis管道&body=Check out this article: https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&name=(三)Redis管道&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&t=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关键词"><span class="toc-number">1.</span> <span class="toc-text">关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么要用管道"><span class="toc-number">2.</span> <span class="toc-text">为什么要用管道</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何使用"><span class="toc-number">3.</span> <span class="toc-text">如何使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Jedis"><span class="toc-number">3.1.</span> <span class="toc-text">Jedis</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Lettuce"><span class="toc-number">3.2.</span> <span class="toc-text">Lettuce</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RedisTemplate"><span class="toc-number">3.3.</span> <span class="toc-text">RedisTemplate</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#简单对比测试"><span class="toc-number">4.</span> <span class="toc-text">简单对比测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#扩展"><span class="toc-number">5.</span> <span class="toc-text">扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">6.</span> <span class="toc-text">参考文献</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        (三)Redis管道
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-09-05T14:44:44.000Z" itemprop="datePublished">2019-09-05</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <blockquote>
+<p>Redis之管道的使用</p>
+<p><a href="https://blog.piaoruiqing.com/blog/2019/06/24/redis管道" target="_blank" rel="noopener">原文地址:  https://blog.piaoruiqing.com/blog/2019/06/24/redis管道</a></p>
+</blockquote>
+<h2 id="关键词"><a href="#关键词" class="headerlink" title="关键词"></a>关键词</h2><p><code>Redis Pipelining</code>: 客户端可以向服务器发送多个请求而无需等待回复, 最后只需一步即可读取回复.</p>
+<p><code>RTT(Round Trip Time)</code>: 往返时间.</p>
+<h2 id="为什么要用管道"><a href="#为什么要用管道" class="headerlink" title="为什么要用管道"></a>为什么要用管道</h2><p>Redis是使用<em>client-server</em>模型和<em>Request/Response</em>协议的TCP服务器. 这意味着通常通过以下步骤完成请求：</p>
+<ul>
+<li>客户端向服务器发送查询, 并通常以阻塞方式从套接字读取服务器响应.</li>
+<li>服务器处理该命令并将响应发送回客户端.</li>
+</ul>
+<p>应用程序与Redis通过网络进行连接, 可能非常快(本地回环), 也可能很慢. 但无论网络延迟是多少, 数据包都需要时间从客户端传输到服务器, 然后从服务器返回到客户端以进行回复(此时间称为<code>RTT</code>). 当客户端需要连续执行许多请求时(例如, 将多个元素添加到同一列表或使用多个键填充数据库), 很容易发现这种频繁操作很影响性能. 使用管道将多次操作通过一次IO发送给Redis服务器, 然后一次性获取每一条指令的结果, 以减少网络上的开销.</p>
+<p>频繁操作但未使用管道的情形如下图: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">	participant client</span><br><span class="line">	participant server</span><br><span class="line">	</span><br><span class="line">	client -&gt;&gt; +server:  </span><br><span class="line">		Note over client,server: set mykey1 myvalue1</span><br><span class="line">	server --&gt;&gt; -client: OK</span><br><span class="line">	client -&gt;&gt; +server:  </span><br><span class="line">		Note over client,server: set mykey1 myvalue1</span><br><span class="line">	server --&gt;&gt; -client: OK</span><br><span class="line">	client -&gt;&gt; +server:  </span><br><span class="line">		Note over client,server: ...</span><br><span class="line">	server --&gt;&gt; -client: OK</span><br></pre></td></tr></table></figure>
+
+
+
+<p>使用管道后如下图:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">	participant client</span><br><span class="line">	participant server</span><br><span class="line">	</span><br><span class="line">	client -&gt;&gt; +server:  </span><br><span class="line">		Note over client,server: set mykey1 myvalue1 &lt;br&#x2F;&gt; set mykey2 myvalue2 &lt;br&#x2F;&gt;...</span><br><span class="line">	server --&gt;&gt; -client: OK, OK, OK ...</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h2><h3 id="Jedis"><a href="#Jedis" class="headerlink" title="Jedis"></a>Jedis</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** jedis pool */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(getClass());</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> JedisPool POOL =</span><br><span class="line">    <span class="keyword">new</span> JedisPool(<span class="keyword">new</span> JedisPoolConfig(), <span class="string">"test-redis-server"</span>, <span class="number">6379</span>);</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * test pipelining with Jedis</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testPipelining</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> (Jedis jedis = POOL.getResource()) &#123;</span><br><span class="line"></span><br><span class="line">        Pipeline pipelined = jedis.pipelined();	<span class="comment">// (一)</span></span><br><span class="line">        Response&lt;String&gt; response1 = pipelined.set(<span class="string">"mykey1"</span>, <span class="string">"myvalue1"</span>);</span><br><span class="line">        Response&lt;String&gt; response2 = pipelined.set(<span class="string">"mykey2"</span>, <span class="string">"myvalue2"</span>);</span><br><span class="line">        Response&lt;String&gt; response3 = pipelined.set(<span class="string">"mykey3"</span>, <span class="string">"myvalue3"</span>);</span><br><span class="line"></span><br><span class="line">        pipelined.sync();	<span class="comment">// (二)</span></span><br><span class="line"></span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey1 myvalue1, result: &#123;&#125;"</span>, response1.get());	<span class="comment">// (三)</span></span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey2 myvalue2, result: &#123;&#125;"</span>, response2.get());</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey3 myvalue3, result: &#123;&#125;"</span>, response3.get());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): <code>jedis.pipelined()</code>: 获取一个<code>Pipeline</code>用以批量执行指令. </li>
+<li>(二): <code>pipelined.sync()</code>: 同步执行, 通过读取全部<code>Response</code>来同步管道, 这个操作会关闭管道.</li>
+<li>(三): <code>response1.get()</code>: 获取执行结果. 注意: 在执行<code>pipelined.sync()</code>之前, <code>get</code>是无法获取到结果的.</li>
+</ul>
+<h3 id="Lettuce"><a href="#Lettuce" class="headerlink" title="Lettuce"></a>Lettuce</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">private</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(getClass());</span><br><span class="line"></span><br><span class="line"><span class="comment">/** redis client */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> RedisClient CLIENT</span><br><span class="line">        = RedisClient.create(<span class="string">"redis://@test-redis-server:6379/0"</span>);</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * test pipelining with Lettuce</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testPipelining</span><span class="params">()</span> <span class="keyword">throws</span> ExecutionException, InterruptedException </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> (StatefulRedisConnection&lt;String, String&gt; connection = CLIENT.connect()) &#123;</span><br><span class="line"></span><br><span class="line">        RedisAsyncCommands&lt;String, String&gt; async = connection.async();</span><br><span class="line">        async.setAutoFlushCommands(<span class="keyword">false</span>);</span><br><span class="line">        RedisFuture&lt;String&gt; future1 = async.set(<span class="string">"mykey1"</span>, <span class="string">"myvalue1"</span>);</span><br><span class="line">        RedisFuture&lt;String&gt; future2 = async.set(<span class="string">"mykey2"</span>, <span class="string">"myvalue2"</span>);</span><br><span class="line">        RedisFuture&lt;String&gt; future3 = async.set(<span class="string">"mykey3"</span>, <span class="string">"myvalue3"</span>);</span><br><span class="line"></span><br><span class="line">        async.flushCommands();</span><br><span class="line"></span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey1 myvalue1, result: &#123;&#125;"</span>, future1.get());</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey2 myvalue2, result: &#123;&#125;"</span>, future1.get());</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey3 myvalue3, result: &#123;&#125;"</span>, future1.get());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="RedisTemplate"><a href="#RedisTemplate" class="headerlink" title="RedisTemplate"></a>RedisTemplate</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Logger LOGGER = LoggerFactory.getLogger(getClass());</span><br><span class="line"></span><br><span class="line"><span class="meta">@Resource</span></span><br><span class="line"><span class="keyword">private</span> StringRedisTemplate stringRedisTemplate;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * test pipelining with RedisTemplate</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testPipelining</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    List&lt;Object&gt; objects </span><br><span class="line">        = stringRedisTemplate.executePipelined((RedisCallback&lt;Object&gt;)connection -&gt; &#123;</span><br><span class="line"></span><br><span class="line">        connection.set(<span class="string">"mykey1"</span>.getBytes(), <span class="string">"myvalue1"</span>.getBytes());</span><br><span class="line">        connection.set(<span class="string">"mykey2"</span>.getBytes(), <span class="string">"myvalue2"</span>.getBytes());</span><br><span class="line">        connection.set(<span class="string">"mykey3"</span>.getBytes(), <span class="string">"myvalue3"</span>.getBytes());</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;	<span class="comment">// (一)</span></span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    LOGGER.info(<span class="string">"cmd: SET mykey myvalue, result: &#123;&#125;"</span>, objects);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>(一): 此处必须返回<code>null</code></li>
+</ul>
+<h2 id="简单对比测试"><a href="#简单对比测试" class="headerlink" title="简单对比测试"></a>简单对比测试</h2><blockquote>
+<p>redis服务器运行在同一个路由器下的树莓派上.</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * pipeline vs direct</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">compared</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> (Jedis jedis = POOL.getResource()) &#123;   <span class="comment">// warm up</span></span><br><span class="line">        jedis.set(<span class="string">"mykey"</span>, <span class="string">"myvalue"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> (Jedis jedis = POOL.getResource()) &#123;</span><br><span class="line">        <span class="keyword">long</span> start = System.nanoTime();</span><br><span class="line">        Pipeline pipelined = jedis.pipelined();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> index = <span class="number">0</span>; index &lt; <span class="number">500</span>; index++) &#123;</span><br><span class="line">            pipelined.set(<span class="string">"mykey"</span> + index, <span class="string">"myvalue"</span> + index);</span><br><span class="line">        &#125;</span><br><span class="line">        pipelined.sync();</span><br><span class="line">        <span class="keyword">long</span> end = System.nanoTime();</span><br><span class="line">        LOGGER.info(<span class="string">"pipeline cost: &#123;&#125; ns"</span>, end - start);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> (Jedis jedis = POOL.getResource()) &#123;</span><br><span class="line">        <span class="keyword">long</span> start = System.nanoTime();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> index = <span class="number">0</span>; index &lt; <span class="number">500</span>; index++) &#123;</span><br><span class="line">            jedis.set(<span class="string">"mykey"</span> + index, <span class="string">"myvalue"</span> + index);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">long</span> end = System.nanoTime();</span><br><span class="line">        LOGGER.info(<span class="string">"direct cost: &#123;&#125; ns"</span>, end - start);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用<code>Jedis</code>执行500条set, 执行结果如下: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">22:16:00.523 [main] INFO - pipeline cost:   73681257 ns		&#x2F;&#x2F; 管道</span><br><span class="line">22:16:03.040 [main] INFO - direct cost  : 2511915103 ns		&#x2F;&#x2F; 直接执行</span><br></pre></td></tr></table></figure>
+
+<p>500次set执行时间总和已经和管道执行一次的所消耗的时间不在一个量级上了. </p>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><blockquote>
+<p>摘自redis官方文档</p>
+</blockquote>
+<p>使用管道不仅仅是为了降低<code>RTT</code>以减少延迟成本, 实际上使用管道也能大大提高Redis服务器中每秒可执行的总操作量. 这是因为, 在不使用管道的情况下, 尽管操作单个命令开起来十分简单, 但实际上这种频繁的<code>I/O</code>操作造成的消耗是巨大的, 这涉及到系统读写的调用, 这意味着从用户域到内核域.上下文切换会对速度产生极大的损耗.</p>
+<p>使用管道操作时, 通常使用单个<code>read()</code> 系统调用读取许多命令，并通过单个<code>write()</code>系统调用传递多个回复. 因此, 每秒执行的总查询数最初会随着较长的管道线性增加, 并最终达到不使用管道技术获的10倍, 如下图所示: </p>
+<p><img src="https://img.piaoruiqing.com/markdown//pipeline_iops.png" alt=""></p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://redis.io" target="_blank" rel="noopener">https://redis.io</a></li>
+</ul>
+<p><strong>欢迎关注公众号(代码如诗):</strong> </p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/business_card.jpg" alt="代码如诗"></p>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关键词"><span class="toc-number">1.</span> <span class="toc-text">关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么要用管道"><span class="toc-number">2.</span> <span class="toc-text">为什么要用管道</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何使用"><span class="toc-number">3.</span> <span class="toc-text">如何使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Jedis"><span class="toc-number">3.1.</span> <span class="toc-text">Jedis</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Lettuce"><span class="toc-number">3.2.</span> <span class="toc-text">Lettuce</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RedisTemplate"><span class="toc-number">3.3.</span> <span class="toc-text">RedisTemplate</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#简单对比测试"><span class="toc-number">4.</span> <span class="toc-text">简单对比测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#扩展"><span class="toc-number">5.</span> <span class="toc-text">扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">6.</span> <span class="toc-text">参考文献</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&text=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&is_video=false&description=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=(三)Redis管道&body=Check out this article: https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&title=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&name=(三)Redis管道&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/&t=(三)Redis管道" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

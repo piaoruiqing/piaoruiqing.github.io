@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Kubernetes教程之应用部署 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blog&#x2F;2019&#x2F;09&#x2F;28&#x2F;kubernetes应用部署&#x2F;  前言本文将与读者一起, 学习如何在Kubernetes上部署应用. 包括: 如何部署应用、发布文件讲解、将本地项目打包发布等. 阅读这篇文章你能收获到:   学会如何在k8s部署应用 如何打包Docker镜像、上传到私有库">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes(二) 应用部署">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="Kubernetes教程之应用部署 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blog&#x2F;2019&#x2F;09&#x2F;28&#x2F;kubernetes应用部署&#x2F;  前言本文将与读者一起, 学习如何在Kubernetes上部署应用. 包括: 如何部署应用、发布文件讲解、将本地项目打包发布等. 阅读这篇文章你能收获到:   学会如何在k8s部署应用 如何打包Docker镜像、上传到私有库">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-24-k8s-2.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-24-k8s-1.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-24-k8s-3.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-26-k8s-4.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-26-k8s-5.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-26-k8s-6.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-26-k8s-7.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-28-k8s-8.jpg">
+<meta property="article:published_time" content="2019-10-27T14:03:08.000Z">
+<meta property="article:modified_time" content="2019-10-27T14:03:08.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.piaoruiqing.com/blog/2019-09-24-k8s-2.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Kubernetes(二) 应用部署</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/hello-world/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/10/Kubernetes(%E4%B8%89)%20%E4%BB%8E%E5%A4%96%E9%83%A8%E8%AE%BF%E9%97%AE%E6%9C%8D%E5%8A%A1/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&text=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&is_video=false&description=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Kubernetes(二) 应用部署&body=Check out this article: https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&name=Kubernetes(二) 应用部署&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&t=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#理解描述文件"><span class="toc-number">2.</span> <span class="toc-text">理解描述文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何访问服务"><span class="toc-number">3.</span> <span class="toc-text">如何访问服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#部署本地项目"><span class="toc-number">4.</span> <span class="toc-text">部署本地项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#打包Docker镜像"><span class="toc-number">4.1.</span> <span class="toc-text">打包Docker镜像</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#推送到远程仓库"><span class="toc-number">4.2.</span> <span class="toc-text">推送到远程仓库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部署"><span class="toc-number">4.3.</span> <span class="toc-text">部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#私库支持"><span class="toc-number">4.3.1.</span> <span class="toc-text">私库支持</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#开始部署"><span class="toc-number">4.3.2.</span> <span class="toc-text">开始部署</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部署集群"><span class="toc-number">4.4.</span> <span class="toc-text">部署集群</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">5.</span> <span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推荐阅读"><span class="toc-number">6.</span> <span class="toc-text">推荐阅读:</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Kubernetes(二) 应用部署
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-10-27T14:03:08.000Z" itemprop="datePublished">2019-10-27</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <blockquote>
+<p>Kubernetes教程之应用部署</p>
+<p>文章地址: <a href="https://blog.piaoruiqing.com/blog/2019/09/28/kubernetes应用部署/" target="_blank" rel="noopener">https://blog.piaoruiqing.com/blog/2019/09/28/kubernetes应用部署/</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文将与读者一起, 学习如何在Kubernetes上部署应用. 包括: 如何部署应用、发布文件讲解、将本地项目打包发布等.</p>
+<p>阅读这篇文章你能收获到: </p>
+<ul>
+<li>学会如何在k8s部署应用</li>
+<li>如何打包Docker镜像、上传到私有库</li>
+</ul>
+<p>阅读本文你需要:</p>
+<ul>
+<li>熟悉Linux命令.</li>
+<li>有一个Kubernetes环境 (可参考<a href="https://blog.piaoruiqing.com/blog/2019/09/17/搭建k8s/" target="_blank" rel="noopener">《跟着官方文档从零搭建K8S》</a>在本地部署一套Kubernetes测试环境)</li>
+</ul>
+<h2 id="理解描述文件"><a href="#理解描述文件" class="headerlink" title="理解描述文件"></a>理解描述文件</h2><p>首先, 我们通过在Kubernetes部署Nginx来理解描述文件.</p>
+<p>一般地, Kubernetes使用yaml(或json)来描述发布配置. 下面是一个简单的描述文件: <code>nginx-pod.yaml</code></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span>      <span class="comment"># 描述文件所遵循KubernetesAPI的版本</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span>           <span class="comment"># 描述的类型是pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-pod</span>   <span class="comment"># pod的名称</span></span><br><span class="line">  <span class="attr">labels:</span>           <span class="comment"># 标签</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nginx-pod</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">test</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx-pod</span>     <span class="comment"># 容器名</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">nginx:1.15</span>   <span class="comment"># 镜像名称及版本</span></span><br><span class="line">      <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span>   <span class="comment"># 如果本地不存在就去远程仓库拉取</span></span><br><span class="line">      <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span>   <span class="comment"># pod对外端口</span></span><br><span class="line">  <span class="attr">restartPolicy:</span> <span class="string">Always</span></span><br></pre></td></tr></table></figure>
+
+<p>我们登录Master节点, 使用<code>kubectl</code>命令来部署这个文件所描述的应用. (当然, 使用dashboard发布也可)</p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-24-k8s-2.jpg" alt=""></p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-24-k8s-1.jpg" alt=""></p>
+<p><code>kubectl get pods</code>命令是用来查看pod列表的, 使用<code>grep</code>筛选出nginx相关的pod. 此时nginx已经发布完成了. 我们可以从dashboard来直观地查看到应用状态.</p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-24-k8s-3.jpg" alt=""></p>
+<blockquote>
+<p>备注: 删除pod可使用<code>kubectl delete -f nginx-pod.yaml</code>命令, 也可直接在dashboard进行操作.</p>
+</blockquote>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+
+<h2 id="如何访问服务"><a href="#如何访问服务" class="headerlink" title="如何访问服务"></a>如何访问服务</h2><p>上一小节我们部署了一个Nginx pod, 但我们无法访问到该Nginx. </p>
+<p>想要访问到pod中的服务, 最简单的方式就是通过端口转发, 执行如下命令, 将宿主机的<code>9999</code>端口与nginx-pod的<code>80</code>端口绑定: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 ~]$ kubectl port-forward --address 0.0.0.0 nginx-pod 9999:80</span><br><span class="line">Forwarding from 0.0.0.0:9999 -&gt; 80</span><br><span class="line">Handling connection <span class="keyword">for</span> 9999</span><br></pre></td></tr></table></figure>
+
+<p>此时, 我们可以通过访问宿主机9999端口来访问Nginx.</p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-26-k8s-4.jpg" alt=""></p>
+<h2 id="部署本地项目"><a href="#部署本地项目" class="headerlink" title="部署本地项目"></a>部署本地项目</h2><p>将本地开发的项目发布到Kubernetes, 需要将项目打包成Docker镜像, 然后将镜像推送到仓库(公开/私有仓库都可).</p>
+<p>首先, 我们需要一个可以运行的本地项目, 笔者使用spring-boot构建了一个简单的web项目: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="meta">@RequestMapping</span>(value = <span class="string">"/k8s-test"</span>)</span><br><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">K8sTestApplication</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@GetMapping</span>(value = <span class="string">"/timestamp"</span>)</span><br><span class="line">    <span class="keyword">public</span> ResponseEntity&lt;?&gt; getTimestamp() &#123;</span><br><span class="line">        <span class="keyword">return</span> ResponseEntity.ok(System.currentTimeMillis() + <span class="string">"\n"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SpringApplication.run(K8sTestApplication<span class="class">.<span class="keyword">class</span>, <span class="title">args</span>)</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="打包Docker镜像"><a href="#打包Docker镜像" class="headerlink" title="打包Docker镜像"></a>打包Docker镜像</h3><blockquote>
+<p>参考: <a href="https://docs.docker.com/engine/reference/builder/" target="_blank" rel="noopener">Dockerfile reference</a></p>
+</blockquote>
+<p>有了项目, 我们需要将其打包成一个Docker镜像, <code>Dockerfile</code>内容如下: </p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> java:<span class="number">8</span>-alpine</span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> ./k8s-test-0.0.1-SNAPSHOT.jar /usr/app/</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /usr/app</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">"java"</span>, <span class="string">"-jar"</span>, <span class="string">"k8s-test-0.0.1-SNAPSHOT.jar"</span>]</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>FROM java:8-alpine</code>: 该镜像基于<code>java-8-alpine</code>镜像.</li>
+<li><code>COPY ./target/k8s-test-0.0.1-SNAPSHOT.jar /usr/app/</code>: 将编译打包好的jar拷贝到镜像的<code>/usr/app</code>目录下.</li>
+<li><code>WORKDIR /usr/app</code>: 工作目录指定为<code>/usr/app</code>.</li>
+<li><code>ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;k8s-test-0.0.1-SNAPSHOT.jar&quot;]</code>: 启动docker时执行<code>java -jar k8s-test-0.0.1-SNAPSHOT.jar</code>命令</li>
+</ul>
+<p>进入到Dockerfile所在目录执行<code>docker build -t piaoruiqing/k8s-test .</code>进行打包. 注意不要遗漏掉命令最后面的<code>.</code>  , 它代表当前目录. </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]$ docker build -t piaoruiqing/k8s-test .</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>docker images</code>命令可以查看本地镜像列表: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]$ docker images | grep k8s</span><br><span class="line">piaoruiqing/k8s-test     latest         efe9e9625376        4 minutes ago       174MB</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="推送到远程仓库"><a href="#推送到远程仓库" class="headerlink" title="推送到远程仓库"></a>推送到远程仓库</h3><p>docker镜像打包完成后, 需要推送到镜像仓库供Kubernetes各个节点使用. 本文以阿里云的<a href="https://cr.console.aliyun.com/cn-hangzhou/instances/namespaces" target="_blank" rel="noopener">容器镜像服务</a>为例.</p>
+<p>首先, 登录到阿里云控制台 -&gt; <a href="https://cr.console.aliyun.com/cn-hangzhou/instances/namespaces" target="_blank" rel="noopener">容器镜像服务</a>, 创建一个命名空间: </p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-26-k8s-5.jpg" alt=""></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 登录, 用于登录的用户名为阿里云账号全名, 密码为开通服务时设置的密码.</span></span><br><span class="line">[root@nas-centos1 k8s-test]$ docker login --username=[用户名] registry.cn-hangzhou.aliyuncs.com</span><br><span class="line"><span class="comment"># 打标签, 镜像ID可以通过 docker images 命令查看</span></span><br><span class="line">[root@nas-centos1 k8s-test]$ docker tag efe9e9625376 registry.cn-hangzhou.aliyuncs.com/piaoruiqing/k8s-test:0.0.1</span><br><span class="line"><span class="comment"># 推送到阿里云镜像仓库</span></span><br><span class="line">[root@nas-centos1 k8s-test]$ docker push registry.cn-hangzhou.aliyuncs.com/piaoruiqing/k8s-test:0.0.1</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-26-k8s-6.jpg" alt=""></p>
+<h3 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h3><h4 id="私库支持"><a href="#私库支持" class="headerlink" title="私库支持"></a>私库支持</h4><p>由于笔者使用了私库, Kubernetes无法直接访问, 发布前需要先创建secret 以支持私有库的访问.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create secret docker-registry docker-registry-secret --docker-server=registry.cn-hangzhou.aliyuncs.com --docker-username=[用户名] --docker-password=[密码] --docker-email=[邮箱]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>docker-registry-secret</code>:  指定密钥的键名称, 可自行定义.</li>
+<li><code>docker-server</code>: 指定 Docker 仓库地址.</li>
+<li><code>docker-username</code>: 指定 Docker 仓库用户名.</li>
+<li><code>docker-password</code>: 指定 Docker 仓库登录密码.</li>
+<li><code>docker-email</code>: 指定邮件地址(选填).</li>
+</ul>
+<p>可通过<code>kubectl get secrets</code>查看全部secret</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]$ kubectl get secrets</span><br><span class="line">NAME                     TYPE                                  DATA   AGE</span><br><span class="line">default-token-s7bps      kubernetes.io/service-account-token   3      13d</span><br><span class="line">docker-registry-secret   kubernetes.io/dockerconfigjson        1      2m50s</span><br></pre></td></tr></table></figure>
+
+<h4 id="开始部署"><a href="#开始部署" class="headerlink" title="开始部署"></a>开始部署</h4><p>访问私库时, 描述文件中需要指定secret, 如下: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">k8s-test-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">k8s-test-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">k8s-test-pod</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">registry.cn-hangzhou.aliyuncs.com/piaoruiqing/k8s-test:0.0.1</span></span><br><span class="line">      <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">  <span class="attr">restartPolicy:</span> <span class="string">Always</span></span><br><span class="line">  <span class="attr">imagePullSecrets:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">docker-registry-secret</span>    <span class="comment"># 这里就是前文中创建的secret, 用来访问私库</span></span><br></pre></td></tr></table></figure>
+
+<p>执行命令<code>kubectl apply -f k8s-test-pod.yaml</code>进行部署, 完成后我们可以在dashboard查看.</p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-26-k8s-7.jpg" alt=""></p>
+<p>使用<code>kubectl port-forward --address 0.0.0.0 k8s-test-pod 80:8080</code>可绑定主机(master) 80端口和pod的8080端口. 如此我们就可以访问 <a href="http://10.33.30.95/k8s-test/timestamp了" target="_blank" rel="noopener">http://10.33.30.95/k8s-test/timestamp了</a>.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos2 ~]$ curl 10.33.30.95/k8s-test/timestamp</span><br><span class="line">1569512136028</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="部署集群"><a href="#部署集群" class="headerlink" title="部署集群"></a>部署集群</h3><p>现在, 我们已经成功地在Kubernetes上部署了一个应用实例, 生产环境中多数情况下我们的应用需要集群部署, 此时, 我们使用 Deployment 来描述即可: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">k8s-test</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">k8s-test</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span>		<span class="comment"># 副本数量</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">k8s-test</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">k8s-test</span></span><br><span class="line">        <span class="attr">env:</span> <span class="string">test</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">k8s-test</span></span><br><span class="line">          <span class="attr">image:</span> <span class="string">registry.cn-hangzhou.aliyuncs.com/piaoruiqing/k8s-test:0.0.1</span></span><br><span class="line">          <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">          <span class="attr">ports:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">http-port</span></span><br><span class="line">              <span class="attr">containerPort:</span> <span class="number">8080</span></span><br><span class="line">      <span class="attr">imagePullSecrets:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">docker-registry-secret</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">Always</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">k8s-test</span></span><br></pre></td></tr></table></figure>
+
+<p>同样地, 使用<code>kubectl apply -f</code>命令发布配置即可.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]$ kubectl apply -f k8s-test.yaml </span><br><span class="line">deployment.apps/k8s-test created</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-28-k8s-8.jpg" alt=""></p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://kubernetes.io/" target="_blank" rel="noopener">https://kubernetes.io</a></li>
+</ul>
+<h2 id="推荐阅读"><a href="#推荐阅读" class="headerlink" title="推荐阅读:"></a>推荐阅读:</h2><ul>
+<li><a href="https://juejin.im/post/5d7fb46d5188253264365dcf" target="_blank" rel="noopener">Kubernetes(一) 跟着官方文档从零搭建K8S</a></li>
+</ul>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#理解描述文件"><span class="toc-number">2.</span> <span class="toc-text">理解描述文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何访问服务"><span class="toc-number">3.</span> <span class="toc-text">如何访问服务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#部署本地项目"><span class="toc-number">4.</span> <span class="toc-text">部署本地项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#打包Docker镜像"><span class="toc-number">4.1.</span> <span class="toc-text">打包Docker镜像</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#推送到远程仓库"><span class="toc-number">4.2.</span> <span class="toc-text">推送到远程仓库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部署"><span class="toc-number">4.3.</span> <span class="toc-text">部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#私库支持"><span class="toc-number">4.3.1.</span> <span class="toc-text">私库支持</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#开始部署"><span class="toc-number">4.3.2.</span> <span class="toc-text">开始部署</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部署集群"><span class="toc-number">4.4.</span> <span class="toc-text">部署集群</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">5.</span> <span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推荐阅读"><span class="toc-number">6.</span> <span class="toc-text">推荐阅读:</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&text=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&is_video=false&description=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Kubernetes(二) 应用部署&body=Check out this article: https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&title=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&name=Kubernetes(二) 应用部署&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/09/Kubernetes(%E4%BA%8C)%20%E5%BA%94%E7%94%A8%E9%83%A8%E7%BD%B2/&t=Kubernetes(二) 应用部署" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

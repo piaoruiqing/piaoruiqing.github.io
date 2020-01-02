@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Redis之使用教程(Java版)  关键词 Jedis: redis java客户端实现. Lettuce: redis java客户端实现, 基于netty. spring-data-redis: Spring针对redis的封装, 配置简单, 提供了与Redis存储交互的抽象封装, 十分优雅, 也极具扩展性. 可集成Jedis、Lettuce等redis客户端. springboot2.0">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(二)Redis使用进阶">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="Redis之使用教程(Java版)  关键词 Jedis: redis java客户端实现. Lettuce: redis java客户端实现, 基于netty. spring-data-redis: Spring针对redis的封装, 配置简单, 提供了与Redis存储交互的抽象封装, 十分优雅, 也极具扩展性. 可集成Jedis、Lettuce等redis客户端. springboot2.0">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
+<meta property="article:published_time" content="2019-09-05T14:44:50.000Z">
+<meta property="article:modified_time" content="2019-09-05T14:44:50.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>(二)Redis使用进阶</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/08/%E5%BC%80%E6%94%BEAPI%E7%BD%91%E5%85%B3%E5%AE%9E%E8%B7%B5(%E4%BA%8C)/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/06/(%E4%B8%89)Redis%E7%AE%A1%E9%81%93/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&text=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&is_video=false&description=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=(二)Redis使用进阶&body=Check out this article: https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&name=(二)Redis使用进阶&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&t=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关键词"><span class="toc-number">1.</span> <span class="toc-text">关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">2.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Jedis"><span class="toc-number">3.</span> <span class="toc-text">Jedis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lettuce"><span class="toc-number">4.</span> <span class="toc-text">Lettuce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Spring-集成"><span class="toc-number">5.</span> <span class="toc-text">Spring 集成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进阶"><span class="toc-number">6.</span> <span class="toc-text">进阶</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#划分应用缓存"><span class="toc-number">6.1.</span> <span class="toc-text">划分应用缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自定义序列化"><span class="toc-number">6.2.</span> <span class="toc-text">自定义序列化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">7.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">8.</span> <span class="toc-text">参考文献</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        (二)Redis使用进阶
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-09-05T14:44:50.000Z" itemprop="datePublished">2019-09-05</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <blockquote>
+<p>Redis之使用教程(Java版)</p>
+</blockquote>
+<h2 id="关键词"><a href="#关键词" class="headerlink" title="关键词"></a>关键词</h2><ul>
+<li><code>Jedis</code>: redis java客户端实现.</li>
+<li><code>Lettuce</code>: redis java客户端实现, 基于netty.</li>
+<li><code>spring-data-redis</code>: Spring针对redis的封装, 配置简单, 提供了与Redis存储交互的抽象封装, 十分优雅, 也极具扩展性. 可集成Jedis、Lettuce等redis客户端. springboot2.0后官方默认集成的客户端从Jedis改为Lettuce.</li>
+</ul>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文将针对使用Java集成Redis进行讲解, <code>Jedis</code>及<code>Lettuce</code>的使用仅作简单描述, <code>spring</code>的<code>redis</code>集成及使用将作为主要讲解内容. </p>
+<h2 id="Jedis"><a href="#Jedis" class="headerlink" title="Jedis"></a>Jedis</h2><blockquote>
+<p><a href="https://github.com/xetorthio/jedis" target="_blank" rel="noopener">https://github.com/xetorthio/jedis</a></p>
+</blockquote>
+<p>引入依赖:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>redis.clients<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jedis<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.9.3<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Jedis</code>是对redis命令的封装, 使用上基本与<code>redis-cli</code>无异, 操作string的使用示例如下: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** jedis pool */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> JedisPool POOL = <span class="keyword">new</span> JedisPool(<span class="keyword">new</span> JedisPoolConfig(), <span class="string">"test-redis-server"</span>, <span class="number">6379</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// test Binary-safe strings with Jedis</span></span><br><span class="line"><span class="keyword">try</span> (Jedis jedis = POOL.getResource())&#123; </span><br><span class="line">    &#123;   <span class="comment">// SET mykey myvalue</span></span><br><span class="line">        String result = jedis.set(<span class="string">"mykey"</span>, <span class="string">"myvalue"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey myvalue, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// GET mykey</span></span><br><span class="line">        String result = jedis.get(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: GET mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// KEYS my*</span></span><br><span class="line">        Set&lt;String&gt; keys = jedis.keys(<span class="string">"my*"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: KEYS my*, result: &#123;&#125;"</span>, JsonUtils.writeValueAsString(keys, <span class="keyword">true</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// EXISTS mykey</span></span><br><span class="line">        Boolean result = jedis.exists(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: EXISTS mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// DEL mykey</span></span><br><span class="line">        Long result = jedis.del(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: DEL mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// GET mykey</span></span><br><span class="line">        String result = jedis.get(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: GET mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>JedisPool</code>: Jedis并不是线程安全的, 所以多线程情况下不应共用<code>Jedis</code>实例, 但创建大量的Jedis会造成不必要的开销甚至对性能产生较大影响, 故使用<code>JedisPool</code>来避免这些问题, 它是一个线程安全的网络连接池. 可以使用它可靠地创建多个Jedis实例, 完成后将Jedis实例回收到连接池中.</li>
+<li><code>JedisPool.getResource</code>: 从连接池获取一个Jedis连接, 注意: <code>Jedis</code>使用完毕后需要调用<code>Jedis.close</code>方法释放资源.(<code>Jedis</code>实现了<code>AutoCloseable</code>, 推荐使用<code>try-with-resource</code>的写法)</li>
+</ul>
+<h2 id="Lettuce"><a href="#Lettuce" class="headerlink" title="Lettuce"></a>Lettuce</h2><blockquote>
+<p><a href="https://lettuce.io/" target="_blank" rel="noopener">https://lettuce.io/</a></p>
+</blockquote>
+<p>引入依赖:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>io.lettuce<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>lettuce-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.1.7.RELEASE<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>Lettuce是一个可扩展的Redis客户端，用于构建非阻塞的Reactive应用程序. 它基于Netty框架构建, 性能较高, 且支持很多redis的高级特性. 目前springboot2.0已将Lettuce作为默认redis客户端. 与上一小节对应, 操作string的使用示例如下: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** redis client */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> RedisClient CLIENT = RedisClient.create(<span class="string">"redis://@test-redis-server:6379/0"</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// test Binary-safe strings with Lettuce</span></span><br><span class="line"><span class="keyword">try</span> (StatefulRedisConnection&lt;String, String&gt; connection = CLIENT.connect()) &#123;</span><br><span class="line">    RedisCommands&lt;String, String&gt; commands = connection.sync();</span><br><span class="line">    &#123;   <span class="comment">// SET mykey myvalue</span></span><br><span class="line">        String result = commands.set(<span class="string">"mykey"</span>, <span class="string">"myvalue"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: SET mykey myvalue, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// GET mykey</span></span><br><span class="line">        String result = commands.get(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: GET mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// KEYS my*</span></span><br><span class="line">        List&lt;String&gt; keys = commands.keys(<span class="string">"my*"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: KEYS my*, result: &#123;&#125;"</span>, JsonUtils.writeValueAsString(keys, <span class="keyword">true</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// EXISTS mykey</span></span><br><span class="line">        Long result = commands.exists(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: EXISTS mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// DEL mykey</span></span><br><span class="line">        Long result = commands.del(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: DEL mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// GET mykey</span></span><br><span class="line">        String result = commands.get(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: GET mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Spring-集成"><a href="#Spring-集成" class="headerlink" title="Spring 集成"></a>Spring 集成</h2><blockquote>
+<p><code>spring-data-redis</code>是<code>Spring Data</code>家族的一部分, 提供了简单的配置以轻松访问redis, 针对存储操作提供了低级别和高级别的抽象, 将开发人员从基础实现中解放出来.</p>
+</blockquote>
+<p>引入依赖: </p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-data-redis<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.1.5.RELEASE<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>使用<code>spring-data-redis</code>开发时, 可能最常使用的就是<code>RedisTemplate</code>, 所以在开始前我们先了解下<code>RedisTemplate</code>: </p>
+<ul>
+<li><code>RedisTemplate</code>是一个简化了Redis访问的工具类.</li>
+<li>线程安全(thread-safe), 作为单例使用即可.</li>
+<li>其实现围绕<code>execute</code>方法, 支持callback, 它提供的<code>RedisConnection</code>处理方式不需要关心连接的声明周期(简言之就是不用创建也不用关连接)</li>
+</ul>
+<p>使用方法很简单, 首先在<code>Configuration</code>中定义<code>StringRedisTemplate</code>的Bean: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * StringRedisTemplate</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> factory</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> StringRedisTemplate <span class="title">stringRedisTemplate</span><span class="params">(RedisConnectionFactory factory)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    StringRedisTemplate template = <span class="keyword">new</span> StringRedisTemplate(factory);</span><br><span class="line">    StringRedisSerializer serializer = <span class="keyword">new</span> StringRedisSerializer();	<span class="comment">// (一)</span></span><br><span class="line">    template.setKeySerializer(serializer);	<span class="comment">// (二)</span></span><br><span class="line">    template.setHashKeySerializer(serializer);</span><br><span class="line">    template.setValueSerializer(serializer);</span><br><span class="line">    template.setHashValueSerializer(serializer);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> template;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>(一): <code>RedisSerializer</code>: 对象到二进制数组序列化和反序列化接口, 序列化和反序列化key和value, <code>StringRedisSerializer</code>、<code>GenericJackson2JsonRedisSerializer</code>都是其实现.</p>
+</li>
+<li><p>(二): <code>KeySerializer</code>用来序列化redis key, <code>HashKeySerializer</code>用来序列化redis hash数据结构的field. 请勿混淆.</p>
+</li>
+</ul>
+<p>当然, 不要忘记了<code>application.yml</code>中添加redis相关配置: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">host:</span> <span class="string">test-redis-server</span></span><br><span class="line">    <span class="attr">port:</span> <span class="number">6379</span></span><br></pre></td></tr></table></figure>
+
+<p>准备工作完成了, 现在就来体验一下, 同样地与前文对应, 操作string的使用示例如下: : </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Resource</span></span><br><span class="line"><span class="keyword">private</span> StringRedisTemplate stringRedisTemplate;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * test Binary-safe strings with RedisTemplate</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testStringRedisTemplateSimple</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#123;   <span class="comment">// SET mykey myvalue</span></span><br><span class="line">        stringRedisTemplate.opsForValue().set(<span class="string">"mykey"</span>, <span class="string">"myvalue"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// GET mykey</span></span><br><span class="line">        String result = stringRedisTemplate.opsForValue().get(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: GET mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// KEYS my*</span></span><br><span class="line">        Set&lt;String&gt; keys = stringRedisTemplate.keys(<span class="string">"my*"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: KEYS my*, result: &#123;&#125;"</span>, JsonUtils.writeValueAsString(keys, <span class="keyword">true</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// EXISTS mykey</span></span><br><span class="line">        Boolean result = stringRedisTemplate.hasKey(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: EXISTS mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// DEL mykey</span></span><br><span class="line">        Boolean result = stringRedisTemplate.delete(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: DEL mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;   <span class="comment">// GET mykey</span></span><br><span class="line">        String result = stringRedisTemplate.opsForValue().get(<span class="string">"mykey"</span>);</span><br><span class="line">        LOGGER.info(<span class="string">"cmd: GET mykey, result: &#123;&#125;"</span>, result);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>opsForValue</code>: 获取<code>Binary-safe strings</code>的操作类<code>ValueOperations</code>( 即spring对redis操作的一个封装类. 同样地, 对<code>hash</code>、<code>set</code>等也有其对应的封装<code>HashOperations</code>、<code>SetOperations</code>等).</li>
+</ul>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+
+<h2 id="进阶"><a href="#进阶" class="headerlink" title="进阶"></a>进阶</h2><h3 id="划分应用缓存"><a href="#划分应用缓存" class="headerlink" title="划分应用缓存"></a>划分应用缓存</h3><blockquote>
+<p>不同应用的缓存可以简单地通过key的<strong>前缀</strong>来划分</p>
+</blockquote>
+<p>让我们来思考这样一个问题, 如果我们想要对不同应用(服务)的缓存进行划分, 以便于管理和维护, 应该如何实现?</p>
+<p>或许增加前缀是一个不错的想法, 但如果每次编码中都需要将前缀<code>prefix</code>拼接到key中, 一方面增加了工作量, 另一份面也增加了出错的风险, 如果忘记拼接了怎么办. 对, 也许你也想到了, 前文提到<code>RedisSerializer</code>是<code>spring-data-redis</code>对象到二进制数组序列化和反序列化接口, 用来序列化和反序列化key和value, 我们可以从这里做文章: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">RedisSerializer</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Serialize the given object to binary data.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> t object to serialize. Can be &#123;<span class="doctag">@literal</span> null&#125;.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the equivalent binary data. Can be &#123;<span class="doctag">@literal</span> null&#125;.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="keyword">byte</span>[] serialize(<span class="meta">@Nullable</span> T t) <span class="keyword">throws</span> SerializationException;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Deserialize an object from the given binary data.</span></span><br><span class="line"><span class="comment">	 *</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> bytes object binary representation. Can be &#123;<span class="doctag">@literal</span> null&#125;.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the equivalent object instance. Can be &#123;<span class="doctag">@literal</span> null&#125;.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="function">T <span class="title">deserialize</span><span class="params">(@Nullable <span class="keyword">byte</span>[] bytes)</span> <span class="keyword">throws</span> SerializationException</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>serialize</code>: 对象 -&gt; byte数组.</li>
+<li><code>deserialize</code>: byte数组 -&gt; 对象.</li>
+</ul>
+<p><code>RedisTemplate</code>对redis的操作和<code>RedisSerializer</code>都有必然的联系, 那么可以通过实现该接口并指定<code>RedisTemplate</code>的<code>KeySerializer</code>来实现增加前缀的功能. 如此一来, 增加前缀的操作就从业务中剥离出来, 对于调用方来说, 完全是透明的, 还算优雅, 具体实现如下: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * generic redis key serializer</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: 2019-06-11 22:37</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GenericRedisKeySerializer</span> <span class="keyword">implements</span> <span class="title">RedisSerializer</span>&lt;<span class="title">Object</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Charset charset;</span><br><span class="line">    <span class="keyword">private</span> String prefix;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> index;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">GenericRedisKeySerializer</span><span class="params">(String prefix)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(prefix, StandardCharsets.UTF_8);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">GenericRedisKeySerializer</span><span class="params">(String prefix, Charset charset)</span> </span>&#123;</span><br><span class="line">        Assert.notNull(charset);</span><br><span class="line">        Assert.notNull(prefix);</span><br><span class="line">        <span class="keyword">this</span>.charset = charset;</span><br><span class="line">        <span class="keyword">this</span>.prefix = prefix + <span class="string">":"</span>;</span><br><span class="line">        index = <span class="keyword">this</span>.prefix.length();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">deserialize</span><span class="params">(<span class="keyword">byte</span>[] bytes)</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == bytes) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        String key = <span class="keyword">new</span> String(bytes, charset);</span><br><span class="line">        <span class="keyword">if</span> (key.indexOf(prefix) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> key.substring(index, key.length());</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> key;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">byte</span>[] serialize(Object key) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == key) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        String string = key.toString();</span><br><span class="line">        <span class="keyword">if</span> (!string.startsWith(prefix)) &#123;</span><br><span class="line">            string = prefix + string;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> string.getBytes(charset);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将前文的<code>StringRedisTemplate</code>稍作修改: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Value</span>(<span class="string">"$&#123;spring.application.name:undefined&#125;"</span>)</span><br><span class="line"><span class="keyword">private</span> String applicationName;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * StringRedisTemplate</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> factory</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> StringRedisTemplate <span class="title">stringRedisTemplate</span><span class="params">(RedisConnectionFactory factory)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    StringRedisTemplate template = <span class="keyword">new</span> StringRedisTemplate(factory);</span><br><span class="line"><span class="comment">//        StringRedisSerializer serializer = new StringRedisSerializer();</span></span><br><span class="line">    GenericRedisKeySerializer serializer = <span class="keyword">new</span> GenericRedisKeySerializer(applicationName);</span><br><span class="line">    template.setKeySerializer(serializer);</span><br><span class="line">    template.setHashKeySerializer(serializer);</span><br><span class="line">    template.setValueSerializer(serializer);</span><br><span class="line">    template.setHashValueSerializer(serializer);</span><br><span class="line">    <span class="keyword">return</span> template;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>StringRedisSerializer</code>替换为自定义的<code>GenericRedisKeySerializer</code>并指定前缀为应用名</li>
+</ul>
+<p>体验一下: </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">stringRedisTemplate.opsForValue().set(<span class="string">"mykey"</span>, <span class="string">"myvalue"</span>);</span><br><span class="line">String result = stringRedisTemplate.opsForValue().get(<span class="string">"mykey"</span>);  <span class="comment">// "myvalue"</span></span><br></pre></td></tr></table></figure>
+
+<p>连接到redis查看key, 已经带有前缀了</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:/home/ubuntu<span class="comment"># docker exec -it redis redis-cli</span></span><br><span class="line">127.0.0.1:6379&gt; keys *</span><br><span class="line">1) <span class="string">"redis-simple:mykey"</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="自定义序列化"><a href="#自定义序列化" class="headerlink" title="自定义序列化"></a>自定义序列化</h3><blockquote>
+<p><code>RedisTemplate</code>默认使用JDK序列化<code>JdkSerializationRedisSerializer</code>, 我们可以指定使用其他方式的序列化, 比如JSON、protostuff</p>
+</blockquote>
+<p>前文已经描述了如何自定义key的序列化方式, value的序列化配置与其相同, 都是实现<code>RedisSerializer</code>并在创建<code>RedisTemplate</code>时指定, 就不重复贴代码了. </p>
+<p>常用的序列化方式有几种: </p>
+<ul>
+<li><code>JDK</code>: 默认, 比较方便, 可序列化所有的类, 但速度慢且占空间较大.</li>
+<li><code>JSON</code>: 性能好, 输出内容比较易读. </li>
+<li><code>Protostuff</code>: 性能很高, 速度快且占用空间较小.</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>本文针对redis讲解了redis java客户端的使用、与spring集成以及进阶使用, 后续将针对Redis的其他使用技巧进行讲解, 敬请关注.</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://redis.io" target="_blank" rel="noopener">https://redis.io</a></li>
+<li><a href="https://spring.io/projects/spring-data-redis" target="_blank" rel="noopener">https://spring.io/projects/spring-data-redis</a></li>
+<li><a href="https://github.com/xetorthio/jedis" target="_blank" rel="noopener">https://github.com/xetorthio/jedis</a></li>
+<li><a href="https://lettuce.io/" target="_blank" rel="noopener">https://lettuce.io/</a></li>
+</ul>
+<p><strong>欢迎关注公众号(代码如诗):</strong> </p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/business_card.jpg" alt="代码如诗"></p>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#关键词"><span class="toc-number">1.</span> <span class="toc-text">关键词</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">2.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Jedis"><span class="toc-number">3.</span> <span class="toc-text">Jedis</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lettuce"><span class="toc-number">4.</span> <span class="toc-text">Lettuce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Spring-集成"><span class="toc-number">5.</span> <span class="toc-text">Spring 集成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进阶"><span class="toc-number">6.</span> <span class="toc-text">进阶</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#划分应用缓存"><span class="toc-number">6.1.</span> <span class="toc-text">划分应用缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自定义序列化"><span class="toc-number">6.2.</span> <span class="toc-text">自定义序列化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">7.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">8.</span> <span class="toc-text">参考文献</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&text=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&is_video=false&description=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=(二)Redis使用进阶&body=Check out this article: https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&title=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&name=(二)Redis使用进阶&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/06/(%E4%BA%8C)Redis%E4%BD%BF%E7%94%A8%E8%BF%9B%E9%98%B6(Java)/&t=(二)Redis使用进阶" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>
