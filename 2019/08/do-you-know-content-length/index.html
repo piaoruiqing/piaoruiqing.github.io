@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ? 由Content-Length导致的问题引发的一系列思考:前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后Content-Length与实际不一致导致的问题, 故有此文. 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2019&#x2F;08&#x2F;do-you-know-content-length">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ? 由Content-Length导致的问题引发的一系列思考:前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后Content-Length与实际不一致导致的问题, 故有此文. 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blo">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-request.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-timeout.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-server.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-response.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-lt-result.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-lt.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-lt-2.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com//blog/2019-09-08-content-length-lt-error.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-Transfer-Encoding-chunked.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog//2019-09-08-chunked-wireshark1.jpg">
+<meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-chunked.jpg">
+<meta property="article:published_time" content="2019-09-08T14:40:41.000Z">
+<meta property="article:modified_time" content="2019-09-08T14:40:41.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-request.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>2019/08/do-you-know-content-length</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/10/migrate-data-without-downtime/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/07/typing-tips/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&text=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&is_video=false&description=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/08/do-you-know-content-length&body=Check out this article: https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&name=2019/08/do-you-know-content-length&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&t=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding"><span class="toc-number">1.</span> <span class="toc-text">用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Content-Length"><span class="toc-number">1.2.</span> <span class="toc-text">什么是Content-Length</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length是如何工作的"><span class="toc-number">1.2.1.</span> <span class="toc-text">Content-Length是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-gt-实际长度"><span class="toc-number">1.2.2.</span> <span class="toc-text">Content-Length &gt; 实际长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-lt-实际长度"><span class="toc-number">1.2.3.</span> <span class="toc-text">Content-Length &lt; 实际长度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不确定Content-Length的值怎么办"><span class="toc-number">1.3.</span> <span class="toc-text">不确定Content-Length的值怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Transfer-Encoding-chunked"><span class="toc-number">1.4.</span> <span class="toc-text">什么是Transfer-Encoding: chunked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Transfer-Encoding-chunked是如何工作的"><span class="toc-number">1.4.1.</span> <span class="toc-text">Transfer-Encoding: chunked是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">1.6.</span> <span class="toc-text">参考文献</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        2019/08/do-you-know-content-length
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-09-08T14:40:41.000Z" itemprop="datePublished">2019-09-08</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding"><a href="#用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding" class="headerlink" title="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?"></a>用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</h1><blockquote>
+<p>由Content-Length导致的问题引发的一系列思考:<br>前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后<code>Content-Length</code>与实际不一致导致的问题, 故有此文.</p>
+<p>文章地址: <a href="https://blog.piaoruiqing.com/blog/2019/09/08/你是否了解content-length/" target="_blank" rel="noopener">https://blog.piaoruiqing.com/blog/2019/09/08/你是否了解content-length/</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><code>Content-Length</code>, HTTP消息长度, 用<strong>十进制数字</strong>表示的<strong>八位字节的数目</strong>. 一般情况下, 很多工作都被框架完成, 我们很少去关注这部分内容, 但少数情况下发生了<code>Content-Length</code>与实际消息长度不一致, 程序可能会发生比较奇怪的异常, 如: </p>
+<ul>
+<li>无响应直到超时.</li>
+<li>请求被截断, 而且下一个请求解析出现错乱.</li>
+</ul>
+<h2 id="什么是Content-Length"><a href="#什么是Content-Length" class="headerlink" title="什么是Content-Length"></a>什么是Content-Length</h2><p><code>Content-Length</code>是HTTP消息长度, 用<strong>十进制数字</strong>表示的<strong>八位字节的数目</strong>, 是Headers中常见的一个字段. <code>Content-Length</code>应该是精确的, 否则就会导致异常 (特别地, HTTP1.0中这个字段可有可无). </p>
+<p><code>Content-Length</code>首部指示出报文中实体主体的字节大小. 这个大小是包含了所有内容编码的, 比如, 对文本文件进行了<code>gzip</code>压缩的话, <code>Content-Length</code>首部指的就是压缩后的大小而不是原始大小.</p>
+<h3 id="Content-Length是如何工作的"><a href="#Content-Length是如何工作的" class="headerlink" title="Content-Length是如何工作的"></a>Content-Length是如何工作的</h3><p><code>Content-Length</code>使用十进制的数字表示了消息的长度, 服务端/客户端通过它来得知后续要读取消息的长度.</p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-request.jpg" alt=""></p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length.jpg" alt=""></p>
+<p>如果这个长度不正确, 会发生如下情况: </p>
+<h3 id="Content-Length-gt-实际长度"><a href="#Content-Length-gt-实际长度" class="headerlink" title="Content-Length &gt; 实际长度"></a>Content-Length &gt; 实际长度</h3><p>如果Content-Length比实际的长度大, 服务端/客户端读取到消息结尾后, 会等待下一个字节, 自然会无响应直到超时.</p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-timeout.jpg" alt=""></p>
+<p>同样地, 在响应消息中<code>Content-Length</code>超过实际长度也是一样的效果: </p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-server.jpg" alt=""></p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-response.jpg" alt=""></p>
+<h3 id="Content-Length-lt-实际长度"><a href="#Content-Length-lt-实际长度" class="headerlink" title="Content-Length &lt; 实际长度"></a>Content-Length &lt; 实际长度</h3><p>如果这个长度小于实际长度, 首次请求的消息会被截取, 比如参数为<code>param=piaoruiqing</code>, <code>Content-Length</code>为10, 那么这次请求的消息会被截取为: <code>param=piao</code>,  如图所示: </p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-lt-result.jpg" alt=""></p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-lt.jpg" alt=""></p>
+<p>但, 仅仅是如此吗, 当然不, 我们再来看看第二次请求会发生什么让人意外的事情, 如图: </p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-content-length-lt-2.jpg" alt=""></p>
+<p>连续的两次请求, 第一次消息被截断, 而第二次没有发生预期的截断, 而是服务端抛出了异常: <code>Request method &#39;ruiqingPOST&#39; not supported</code>.刺不刺激  (ﾉ)ﾟДﾟ( )</p>
+<p>那 <code>ruiqingPOST</code>是个什么神仙方法???  此时, 凭着多年开发(DEBUG)经验练就的敏感度, 我们大致可以猜出, 上一次请求被截取剩下的消息, 在这次请求出现了. 掏出wireshark来验证一下, 如图: </p>
+<p><img src="https://img.piaoruiqing.com//blog/2019-09-08-content-length-lt-error.jpg" alt=""></p>
+<p>导致这种情况的原因就是开启了<code>Connection:keep-alive</code>, 如果使用<code>Connection:close</code>, 所产生的现象就是每一次的请求都被截断, 但不会产生解析混乱(如将上一次剩下的消息拼接到后续的请求消息中).</p>
+<h2 id="不确定Content-Length的值怎么办"><a href="#不确定Content-Length的值怎么办" class="headerlink" title="不确定Content-Length的值怎么办"></a>不确定Content-Length的值怎么办</h2><p><code>Content-Length</code>首部指示出报文中实体主体的字节大小. 但如在请求处理完成前无法获取消息长度, 我们就无法明确指定<code>Content-Length</code>, 此时应该使用<code>Transfer-Encoding: chunked</code></p>
+<h2 id="什么是Transfer-Encoding-chunked"><a href="#什么是Transfer-Encoding-chunked" class="headerlink" title="什么是Transfer-Encoding: chunked"></a>什么是Transfer-Encoding: chunked</h2><p>数据以一系列分块的形式进行发送.  <code>Content-Length</code> 首部在这种情况下不被发送. 在每一个分块的开头需要添加当前分块的长度, 以十六进制的形式表示，后面紧跟着 <code>\r\n</code> , 之后是分块本身, 后面也是<code>\r\n</code>. 终止块是一个常规的分块, 不同之处在于其长度为0. </p>
+<h3 id="Transfer-Encoding-chunked是如何工作的"><a href="#Transfer-Encoding-chunked是如何工作的" class="headerlink" title="Transfer-Encoding: chunked是如何工作的"></a>Transfer-Encoding: chunked是如何工作的</h3><p>接下来我们用一个下载文件的例子🌰, 来探讨<code>Transfer-Encoding: chunked</code>是如何工作的. 服务端代码如下: </p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-Transfer-Encoding-chunked.jpg" alt=""></p>
+<p>使用postman发起请求, wireshark抓包查看, 如图: </p>
+<p><img src="https://img.piaoruiqing.com/blog//2019-09-08-chunked-wireshark1.jpg" alt=""></p>
+<p>在wireshark中可以很清晰地看到chunked的数据, 其结构大致是: 返回的消息被分为多个数据块, 每个数据块有两部分, <code>长度</code> + <code>数据</code>, 这两部分都以CRLF(即<code>\r\n</code>)结尾. 而终止块是一个特殊的数据块, 其长度为0, 如图: </p>
+<p><img src="https://img.piaoruiqing.com/blog/2019-09-08-chunked.jpg" alt=""></p>
+<p>如此, 即完成了分块编码. 其主要应用于如下场景, 即要传输大量的数据, 但是在请求在没有被处理完之前响应的长度是无法获得的. 例如, 当需要用从数据库中查询获得的数据生成一个大的HTML表格、需要传输大量的图片等.</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><ul>
+<li><code>Content-Length</code>如果存在且生效, 必须是正确的, 否则会发生异常.(大于实际值会超时, 小于实际值会截断并可能导致后续的数据解析混乱)</li>
+<li>如果报文中包含<code>Transfer-Encoding: chunked</code>首部, 那么<code>Content-Length</code>将被忽略.</li>
+</ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://developer.mozilla.org/" target="_blank" rel="noopener">https://developer.mozilla.org</a></li>
+<li>《HTTP权威指南》</li>
+</ul>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding"><span class="toc-number">1.</span> <span class="toc-text">用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Content-Length"><span class="toc-number">1.2.</span> <span class="toc-text">什么是Content-Length</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length是如何工作的"><span class="toc-number">1.2.1.</span> <span class="toc-text">Content-Length是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-gt-实际长度"><span class="toc-number">1.2.2.</span> <span class="toc-text">Content-Length &gt; 实际长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-lt-实际长度"><span class="toc-number">1.2.3.</span> <span class="toc-text">Content-Length &lt; 实际长度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不确定Content-Length的值怎么办"><span class="toc-number">1.3.</span> <span class="toc-text">不确定Content-Length的值怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Transfer-Encoding-chunked"><span class="toc-number">1.4.</span> <span class="toc-text">什么是Transfer-Encoding: chunked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Transfer-Encoding-chunked是如何工作的"><span class="toc-number">1.4.1.</span> <span class="toc-text">Transfer-Encoding: chunked是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">1.6.</span> <span class="toc-text">参考文献</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&text=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&is_video=false&description=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/08/do-you-know-content-length&body=Check out this article: https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&name=2019/08/do-you-know-content-length&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&t=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

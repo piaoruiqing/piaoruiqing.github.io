@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="我是如何通过Nginx日志实时封禁风险IP的 实时采集并分析Nginx日志, 自动化封禁风险IP方案 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;2019&#x2F;11&#x2F;17&#x2F;block-ip-by-analyzing-nginx-logs&#x2F;  [toc] 前言本文分享了自动化采集、分析Nginx日志并实时封禁风险IP的方案及实践.  阅读这篇文章你能收获到:   日志采集方案.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2019&#x2F;11&#x2F;block-ip-by-analyzing-nginx-logs">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="我是如何通过Nginx日志实时封禁风险IP的 实时采集并分析Nginx日志, 自动化封禁风险IP方案 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;2019&#x2F;11&#x2F;17&#x2F;block-ip-by-analyzing-nginx-logs&#x2F;  [toc] 前言本文分享了自动化采集、分析Nginx日志并实时封禁风险IP的方案及实践.  阅读这篇文章你能收获到:   日志采集方案.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-2.jpg">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-3.jpg">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-4.jpg">
+<meta property="article:published_time" content="2019-11-24T03:41:07.000Z">
+<meta property="article:modified_time" content="2019-11-24T03:41:07.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>2019/11/block-ip-by-analyzing-nginx-logs</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/11/is-your-server-safe-enough/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/11/how-to-learn-programming/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&text=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&is_video=false&description=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/11/block-ip-by-analyzing-nginx-logs&body=Check out this article: https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&name=2019/11/block-ip-by-analyzing-nginx-logs&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&t=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#我是如何通过Nginx日志实时封禁风险IP的"><span class="toc-number">1.</span> <span class="toc-text">我是如何通过Nginx日志实时封禁风险IP的</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#背景"><span class="toc-number">1.1.1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#需求"><span class="toc-number">1.1.2.</span> <span class="toc-text">需求</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析"><span class="toc-number">1.2.</span> <span class="toc-text">分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方案"><span class="toc-number">1.3.</span> <span class="toc-text">方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#日志采集"><span class="toc-number">1.3.1.</span> <span class="toc-text">日志采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#风险评估"><span class="toc-number">1.3.2.</span> <span class="toc-text">风险评估</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IP封禁"><span class="toc-number">1.3.3.</span> <span class="toc-text">IP封禁</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实施"><span class="toc-number">1.4.</span> <span class="toc-text">实施</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#日志采集-1"><span class="toc-number">1.4.1.</span> <span class="toc-text">日志采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#风险评估-1"><span class="toc-number">1.4.2.</span> <span class="toc-text">风险评估</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#获取IP归属地"><span class="toc-number">1.4.2.1.</span> <span class="toc-text">获取IP归属地</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#获取AS、ASN及用途"><span class="toc-number">1.4.2.2.</span> <span class="toc-text">获取AS、ASN及用途</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#综合评分"><span class="toc-number">1.4.2.3.</span> <span class="toc-text">综合评分</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IP封禁-1"><span class="toc-number">1.4.3.</span> <span class="toc-text">IP封禁</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.5.</span> <span class="toc-text">结语</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        2019/11/block-ip-by-analyzing-nginx-logs
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-11-24T03:41:07.000Z" itemprop="datePublished">2019-11-24</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="我是如何通过Nginx日志实时封禁风险IP的"><a href="#我是如何通过Nginx日志实时封禁风险IP的" class="headerlink" title="我是如何通过Nginx日志实时封禁风险IP的"></a>我是如何通过Nginx日志实时封禁风险IP的</h1><blockquote>
+<p>实时采集并分析Nginx日志, 自动化封禁风险IP方案</p>
+<p>文章地址: <a href="https://blog.piaoruiqing.com/2019/11/17/block-ip-by-analyzing-nginx-logs/" target="_blank" rel="noopener">https://blog.piaoruiqing.com/2019/11/17/block-ip-by-analyzing-nginx-logs/</a></p>
+</blockquote>
+<p>[toc]</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文分享了自动化采集、分析Nginx日志并实时封禁风险IP的方案及实践. </p>
+<p>阅读这篇文章你能收获到: </p>
+<ul>
+<li>日志采集方案.</li>
+<li>风险IP评估的简单方案.</li>
+<li>IP封禁策略及方案.</li>
+</ul>
+<p>阅读本文你需要:</p>
+<ul>
+<li>熟悉编程.</li>
+<li>熟悉常用Linux命令.</li>
+<li>了解Docker.</li>
+</ul>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>分析nginx访问日志时, 看到大量404的无效请求, URL都是随机的一些敏感词. 而且近期这些请求越来越频繁, 手动批量封禁了一些IP后, 很快就有新的IP进来. </p>
+<p>因此萌生了通过自动化分析Nginx日志实时封禁IP的想法.</p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg" alt="nginx-404-accesslog"></p>
+<h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><table>
+<thead>
+<tr>
+<th>序号</th>
+<th>需求</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Nginx日志收集</td>
+<td>方案有很多, 笔者选择了最适合个人服务器的方案: <code>filebeat</code>+<code>redis</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>日志实时分析</td>
+<td>实时消费<code>redis</code>的日志, 解析出需要的数据进行分析</td>
+</tr>
+<tr>
+<td>3</td>
+<td>IP风险评估</td>
+<td>对IP进行风险评估, 多个维度: 访问次数、IP归属、用途等</td>
+</tr>
+<tr>
+<td>4</td>
+<td>实时封禁</td>
+<td>针对风险IP进行不同时长的封禁</td>
+</tr>
+</tbody></table>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>从日志中简单总结几个特征: </p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>特征</th>
+<th>描述</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>访问频繁</td>
+<td>每秒数次甚至数十次</td>
+<td>正常的流量行为也存在突发流量, 但不会持续很久</td>
+</tr>
+<tr>
+<td>2</td>
+<td>持续请求</td>
+<td>持续时间久</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>3</td>
+<td>多数404</td>
+<td>请求的URL可能大多数都不存在, 且存在敏感词汇如admin、login、phpMyAdmin、backup等</td>
+<td>正常流量行为很少存在这种情况</td>
+</tr>
+<tr>
+<td>4</td>
+<td>IP不正常</td>
+<td>通过ASN能看出一些端倪, 一般这类请求的IP都不是普通的个人用户.</td>
+<td>查询其用途一般是COM(商业)、DCH(数据中心/网络托管/传输)、SES(搜索引擎蜘蛛)等</td>
+</tr>
+</tbody></table>
+<p>备注: 这里分析IP是通过<a href="https://lite.ip2location.com/" target="_blank" rel="noopener">ip2location</a>的免费版数据库, 后面会有详细的描述.</p>
+<h2 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    participant Nginx</span><br><span class="line">    participant Filebeat</span><br><span class="line">    participant Redis</span><br><span class="line">    participant Monitor</span><br><span class="line">    participant Actuator</span><br><span class="line">    Nginx -&gt;&gt; Filebeat: accessLog(File)</span><br><span class="line">    Filebeat -&gt;&gt; Redis: accessLog(JSON)</span><br><span class="line">    loop Always</span><br><span class="line">    Redis -&gt;&gt; Monitor: accessLog(JSON)</span><br><span class="line">    activate Monitor</span><br><span class="line">    Monitor -&gt;&gt; Monitor: Analysis</span><br><span class="line">    Monitor -&gt;&gt; Monitor: Risk assessment</span><br><span class="line">    Monitor -&gt;&gt; Actuator: Banned</span><br><span class="line">    Monitor -&gt;&gt; Monitor: Storing</span><br><span class="line">    end</span><br><span class="line">    deactivate Monitor</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="日志采集"><a href="#日志采集" class="headerlink" title="日志采集"></a>日志采集</h3><p>来源: 笔者的网站通过docker部署, Nginx作为唯一入口, 记录了全部访问日志. </p>
+<p>采集: 由于资源有限, 笔者选择了一款轻量的日志采集工具<strong>Filebeat</strong>, 收集Nginx日志并写入Redis.</p>
+<h3 id="风险评估"><a href="#风险评估" class="headerlink" title="风险评估"></a>风险评估</h3><p><strong>Monitor</strong>服务根据URL、IP、历史评分等进行风险评估, 计算出最终的危险系数.</p>
+<h3 id="IP封禁"><a href="#IP封禁" class="headerlink" title="IP封禁"></a>IP封禁</h3><p><strong>Monitor</strong>发现危险IP后(危险系数超过阈值), 调用<strong>Actuator</strong>进行IP封禁, 封禁时长根据危险系数计算得出.</p>
+<h2 id="实施"><a href="#实施" class="headerlink" title="实施"></a>实施</h2><h3 id="日志采集-1"><a href="#日志采集-1" class="headerlink" title="日志采集"></a>日志采集</h3><p>Filebeat的用法很简单, 笔者通过swarm进行部署, 其部署文件如下(为防止代码过长, 此处略去了其他服务): </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">'3.5'</span></span><br><span class="line"><span class="comment">##################################################</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">filebeat:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">docker.elastic.co/beats/filebeat:7.4.2</span></span><br><span class="line">    <span class="attr">deploy:</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">64M</span></span><br><span class="line">      <span class="attr">restart_policy:</span></span><br><span class="line">        <span class="attr">condition:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">$PWD/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">$PWD/filebeat/data:/usr/share/filebeat/data:rw</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">$PWD/nginx/logs:/logs/nginx:ro</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">TZ:</span> <span class="string">Asia/Shanghai</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">nginx</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>image</strong>: 指定镜像和版本.</li>
+<li><strong>deploy.resources.limits.memory</strong>: 限制内存.</li>
+<li><strong>$PWD/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro</strong>: filebeat.yml是配置文件, 其中描述了日志来源和去处. <code>$PWD</code>为当前目录, 即执行<code>docker stack deploy</code>的目录. <code>ro</code>为只读权限.</li>
+<li><strong>$PWD/filebeat/data:/usr/share/filebeat/data:rw</strong>: 需要持久化data目录, 这样删除docker重新部署也会记录上一次读取日志的位置.<code>rw</code>为读写权限.</li>
+<li><strong>$PWD/nginx/logs:/logs/nginx:ro</strong>: 将Nginx日志目录映射到Filebeat.</li>
+<li><strong>environment.TZ</strong>: 时区</li>
+</ul>
+<p><code>filebeat.yml</code>文件内容如下: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">filebeat.inputs:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">type:</span> <span class="string">log</span></span><br><span class="line">  <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">paths:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">/logs/nginx/access.log</span></span><br><span class="line">  <span class="attr">json.keys_under_root:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">json.overwrite_keys:</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="attr">output.redis:</span></span><br><span class="line">  <span class="attr">hosts:</span> <span class="string">["redis-server"]</span></span><br><span class="line">  <span class="attr">password:</span> <span class="string">"&#123;your redis password&#125;"</span></span><br><span class="line">  <span class="attr">key:</span> <span class="string">"filebeat:nginx:accesslog"</span></span><br><span class="line">  <span class="attr">db:</span> <span class="number">0</span></span><br><span class="line">  <span class="attr">timeout:</span> <span class="number">5</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>filebeat.inputs</strong>: 定义输入</p>
+</li>
+<li><p><strong>paths</strong>: 日志路径</p>
+</li>
+<li><p><strong>json.keys_under_root</strong>: 将日志内容放到json的根节点(如果没有设置, 整条数据会被放到一个二级节点下). 注: 笔者将nginx日志配置为json格式. 参考配置如下: </p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">log_format  main_json  escape=json</span><br><span class="line">  <span class="string">'&#123;'</span></span><br><span class="line">      <span class="string">'"@timestamp":"$time_iso8601",'</span></span><br><span class="line">      <span class="string">'"http_host":"$http_host",'</span></span><br><span class="line">      <span class="string">'"remote_addr":"$remote_addr",'</span></span><br><span class="line">      <span class="string">'"request_uri":"$request_uri",'</span></span><br><span class="line">      <span class="string">'"request_method":"$request_method",'</span></span><br><span class="line">      <span class="string">'"server_protocol":"$server_protocol",'</span></span><br><span class="line">      <span class="string">'"status":$status,'</span></span><br><span class="line">      <span class="string">'"request_time":"$request_time",'</span></span><br><span class="line">      <span class="string">'"body_bytes_sent":$body_bytes_sent,'</span></span><br><span class="line">      <span class="string">'"http_referer":"$http_referer",'</span></span><br><span class="line">      <span class="string">'"http_user_agent":"$http_user_agent",'</span></span><br><span class="line">      <span class="string">'"http_x_forwarded_for":"$http_x_forwarded_for"'</span></span><br><span class="line">  <span class="string">'&#125;'</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>json.overwrite_keys</strong>: 覆盖Filebeat生成的KEY, 此处为了覆盖<code>@timestamp</code>字段.</p>
+</li>
+<li><p><strong>output.redis</strong>: 定义输出.</p>
+</li>
+</ul>
+<p>部署成功后查看redis数据: </p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-2.jpg" alt="accesslog-in-redis"></p>
+<h3 id="风险评估-1"><a href="#风险评估-1" class="headerlink" title="风险评估"></a>风险评估</h3><p><code>Monitor</code>服务使用Java编写, 使用docker部署, 与<code>Actuator</code>服务通过http交互.</p>
+<p>风险评估需要综合多个维度: </p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>维度</th>
+<th>策略</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>IP归属地</td>
+<td>中文网站的用户群体一般归属地都在中国, 若IP归属地为国外就需要警惕了.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>用途</td>
+<td>通过IP获取其用途, DCH(数据中心/网络托管/传输)、SES(搜索引擎蜘蛛)等提高危险评分.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>访问资源</td>
+<td>访问资源不存在且路径中含有敏感词, 如admin、login、phpMyAdmin、backup等, 提高危险评分.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>访问频率及持续时间</td>
+<td>频繁且持久的请求, 考虑提高评分.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>历史评分</td>
+<td>历史评分综合到当前评分中.</td>
+</tr>
+</tbody></table>
+<h4 id="获取IP归属地"><a href="#获取IP归属地" class="headerlink" title="获取IP归属地"></a>获取IP归属地</h4><p>IP归属地获取比较容易, 有不少数据服务网站提供了免费套餐, 如<a href="https://ipinfo.io/" target="_blank" rel="noopener">IpInfo</a>等. 也有免费版IP数据库可以下载如<a href="https://lite.ip2location.com/" target="_blank" rel="noopener">ip2location</a>等.</p>
+<p>笔者使用了<a href="https://lite.ip2location.com/" target="_blank" rel="noopener">ip2location</a>的免费版数据库: </p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-3.jpg" alt="ip2location"></p>
+<p><strong>ip_from</strong>和<strong>ip_to</strong>是IP段起止, 存储的格式是十进制, MySQL中可通过<code>inet_aton(&#39;your ip&#39;)</code>函数将IP转为十进制. 如: </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> @a:= <span class="keyword">inet_aton</span>(<span class="string">'172.217.6.78'</span>);</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ip2location_db11 <span class="keyword">WHERE</span> ip_from &lt;= @a <span class="keyword">AND</span> ip_to &gt;= @a <span class="keyword">LIMIT</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>ip_from</th>
+<th>ip_to</th>
+<th>country_code</th>
+<th>country_name</th>
+<th>region_name</th>
+<th>city_name</th>
+<th>latitude</th>
+<th>longitude</th>
+<th>zip_code</th>
+<th>time_zone</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2899902464</td>
+<td>2899910655</td>
+<td>US</td>
+<td>United States</td>
+<td>California</td>
+<td>Mountain View</td>
+<td>37.405992</td>
+<td>-122.07852</td>
+<td>94043</td>
+<td>-07:00</td>
+</tr>
+</tbody></table>
+<ul>
+<li>数据量很大, 建议带上<code>LIMIT 1</code>.</li>
+</ul>
+<h4 id="获取AS、ASN及用途"><a href="#获取AS、ASN及用途" class="headerlink" title="获取AS、ASN及用途"></a>获取AS、ASN及用途</h4><p>多数网站提供的免费服务中都无法查询ASN或没有其用途. ASN数据也有免费的数据库, 但是依旧没有其用途及类型等. 此时笔者通过其它的方法曲线救国. </p>
+<p><a href="https://lite.ip2location.com/" target="_blank" rel="noopener">ip2location</a>提供了免费版本的<code>IP2Location™LITE IP-ASN</code>和<code>IP2Proxy™LITE</code>数据库.</p>
+<p><strong>IP2Location™LITE IP-ASN</strong>: 数据库提供了确定自治系统和编号(ASN)的参考.</p>
+<p><strong>IP2Proxy™LITE</strong>: 数据库包含被用作开放代理的IP地址. 该数据库包括所有公共IPv4和IPv6地址的代理类型、国家、地区、城市、ISP、域、使用类型、ASN和最新记录. </p>
+<p><strong>IP2Location™LITE IP-ASN</strong>中无法查询到IP的使用类型, <strong>IP2Proxy™LITE</strong>数据较少中不一定会包含指定的IP. 但可以结合这两个库, 大致猜测IP的用途: </p>
+<ol>
+<li><p>首先, 在<strong>IP2Proxy™LITE</strong>中查询出IP的ASN.</p>
+ <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> @a:= <span class="keyword">inet_aton</span>(<span class="string">'172.217.6.78'</span>);</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ip2location_asn <span class="keyword">WHERE</span> ip_from &lt;= @a <span class="keyword">AND</span> ip_to &gt;= @a <span class="keyword">LIMIT</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>ip_from</th>
+<th>ip_to</th>
+<th>cidr</th>
+<th>asn</th>
+<th>as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2899904000</td>
+<td>2899904255</td>
+<td>172.217.6.0/24</td>
+<td><strong>15169</strong></td>
+<td>Google LLC</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>结合ASN和IP, 查询相同ASN<strong>最接近</strong>指定IP的前后两条记录: </p>
+ <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> @a:= <span class="keyword">inet_aton</span>(<span class="string">'172.217.6.78'</span>);</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ip2proxy_px8 <span class="keyword">WHERE</span> ip_from &gt;= @a <span class="keyword">AND</span> asn = <span class="number">15169</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> ip_from <span class="keyword">ASC</span> <span class="keyword">LIMIT</span> <span class="number">1</span>;</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ip2proxy_px8 <span class="keyword">WHERE</span> ip_from &lt;= @a <span class="keyword">AND</span> asn = <span class="number">15169</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> ip_from <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>ip_from</th>
+<th>ip_to</th>
+<th>region_name</th>
+<th>isp</th>
+<th>usage_type</th>
+<th>asn</th>
+<th>as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2899904131</td>
+<td>2899904131</td>
+<td>California</td>
+<td>Google LLC</td>
+<td>DCH</td>
+<td>15169</td>
+<td>Google LLC</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>ip_from</th>
+<th>ip_to</th>
+<th>region_name</th>
+<th>isp</th>
+<th>usage_type</th>
+<th>asn</th>
+<th>as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2899904015</td>
+<td>2899904015</td>
+<td>California</td>
+<td>Google LLC</td>
+<td>DCH</td>
+<td>15169</td>
+<td>Google LLC</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>计算查询到的proxy记录中IP与当前IP的差值的绝对值.</p>
+<table>
+<thead>
+<tr>
+<th>IP</th>
+<th>proxy IP</th>
+<th>abs(IP - proxy IP)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2899904078</td>
+<td>2899904131</td>
+<td>53</td>
+</tr>
+<tr>
+<td>2899904078</td>
+<td>2899904015</td>
+<td>63</td>
+</tr>
+</tbody></table>
+<p> 如果绝对值很接近, 那么就认为此IP的用途和proxy IP相同. 很接近的定义可以根据情况调整, 如绝对值在65535范围内.</p>
+</li>
+</ol>
+<h4 id="综合评分"><a href="#综合评分" class="headerlink" title="综合评分"></a>综合评分</h4><p>综合评分的规则可根据实际场景进行调整</p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>评分项</th>
+<th>评分规则(1-10分)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>IP归属地</td>
+<td>如: 国内5分, 国外10分, 可根据地区再进行细分</td>
+</tr>
+<tr>
+<td>2</td>
+<td>用途</td>
+<td>如: ISP/MOB计2分, COM计5分, DCH计10分</td>
+</tr>
+<tr>
+<td>3</td>
+<td>访问资源</td>
+<td>如: 404计5分, 存在敏感词一律10分</td>
+</tr>
+<tr>
+<td>4</td>
+<td>访问频率及持续时间</td>
+<td>根据一段时间内平均访问次数计算分数</td>
+</tr>
+<tr>
+<td>5</td>
+<td>历史评分</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>综合上述1-5项, 进行计算, 可以简单的相加, 也可加权计算.</p>
+<h3 id="IP封禁-1"><a href="#IP封禁-1" class="headerlink" title="IP封禁"></a>IP封禁</h3><p>笔者采用<strong><a href="http://ipset.netfilter.org/iptables.man.html" target="_blank" rel="noopener">iptables</a></strong>+<strong><a href="http://ipset.netfilter.org/ipset.man.html" target="_blank" rel="noopener">ipset</a></strong>的方式进行IP封禁. <code>Actuator</code>服务使用node编写, 运行在主机上, docker中的<code>Monitor</code>通过http与其交互. 封禁IP部分代码如下: </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">'use strict'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">const</span> shell = <span class="built_in">require</span>(<span class="string">'shelljs'</span>);</span><br><span class="line"><span class="keyword">const</span> router = express.Router();</span><br><span class="line"></span><br><span class="line">router.post(<span class="string">'/blacklist/:name/:ip'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">let</span> name = req.params.name;</span><br><span class="line">    <span class="keyword">let</span> ip = req.params.ip;</span><br><span class="line">    <span class="keyword">let</span> timeout = req.query.timeout;</span><br><span class="line">    <span class="keyword">let</span> cmd = <span class="string">`ipset -exist add <span class="subst">$&#123;name&#125;</span> <span class="subst">$&#123;ip&#125;</span> timeout <span class="subst">$&#123;timeout&#125;</span>`</span>;</span><br><span class="line">    <span class="built_in">console</span>.log(cmd);</span><br><span class="line">    shell.exec(cmd);</span><br><span class="line">    res.send(<span class="string">'ok\n'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = router;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>name</strong>: 黑名单名称.</li>
+<li><strong>timeout</strong>: 超时时间, 单位: 秒.</li>
+</ul>
+<p>目前, 还是有不少”头铁”的IP频繁扫描笔者的网站, 在发现后几秒内自动屏蔽掉, 目前效果比较理想.</p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-4.jpg" alt="violation-ticket-list"></p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><ul>
+<li>爬虫、机器人、漏洞扫描等给网站造成了不必要的开销甚至带来风险, 不可忽视. 绝对安全很难做到, 但至少可以做到比别人安全. </li>
+<li>封禁是相对暴力的手段, 一定要把握好尺度, 出现误杀会导致网站流失用户. </li>
+<li>除了封禁外, 也可考虑”祸水东引”, 将风险IP 302重定向到gitpage(备份站点), 这样就算误杀, 也不会造成用户无法访问的情况.</li>
+<li>道路千万条, 安全第一条</li>
+</ul>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#我是如何通过Nginx日志实时封禁风险IP的"><span class="toc-number">1.</span> <span class="toc-text">我是如何通过Nginx日志实时封禁风险IP的</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#背景"><span class="toc-number">1.1.1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#需求"><span class="toc-number">1.1.2.</span> <span class="toc-text">需求</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析"><span class="toc-number">1.2.</span> <span class="toc-text">分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方案"><span class="toc-number">1.3.</span> <span class="toc-text">方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#日志采集"><span class="toc-number">1.3.1.</span> <span class="toc-text">日志采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#风险评估"><span class="toc-number">1.3.2.</span> <span class="toc-text">风险评估</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IP封禁"><span class="toc-number">1.3.3.</span> <span class="toc-text">IP封禁</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实施"><span class="toc-number">1.4.</span> <span class="toc-text">实施</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#日志采集-1"><span class="toc-number">1.4.1.</span> <span class="toc-text">日志采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#风险评估-1"><span class="toc-number">1.4.2.</span> <span class="toc-text">风险评估</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#获取IP归属地"><span class="toc-number">1.4.2.1.</span> <span class="toc-text">获取IP归属地</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#获取AS、ASN及用途"><span class="toc-number">1.4.2.2.</span> <span class="toc-text">获取AS、ASN及用途</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#综合评分"><span class="toc-number">1.4.2.3.</span> <span class="toc-text">综合评分</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IP封禁-1"><span class="toc-number">1.4.3.</span> <span class="toc-text">IP封禁</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.5.</span> <span class="toc-text">结语</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&text=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&is_video=false&description=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/11/block-ip-by-analyzing-nginx-logs&body=Check out this article: https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&title=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&name=2019/11/block-ip-by-analyzing-nginx-logs&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/11/block-ip-by-analyzing-nginx-logs/&t=2019/11/block-ip-by-analyzing-nginx-logs" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

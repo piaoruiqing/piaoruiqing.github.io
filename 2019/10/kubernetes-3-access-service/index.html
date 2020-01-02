@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Kubernetes教程之对外暴露服务 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;  前言通过前文的讲解,《跟着官方文档从零搭建K8S》、《应用部署》相信读者已经对Kubernetes安装及部署应用有了一定的了解. 接下来, 本文将针对如何将服务暴露给外部进行讲解. 阅读这篇文章你能收获到:   了解Kubernetes暴露服务的几种方案及其优缺点.  阅读本文你需要">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes(三) 如何从外部访问服务">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="Kubernetes教程之对外暴露服务 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;  前言通过前文的讲解,《跟着官方文档从零搭建K8S》、《应用部署》相信读者已经对Kubernetes安装及部署应用有了一定的了解. 接下来, 本文将针对如何将服务暴露给外部进行讲解. 阅读这篇文章你能收获到:   了解Kubernetes暴露服务的几种方案及其优缺点.  阅读本文你需要">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-10-27T14:03:01.000Z">
+<meta property="article:modified_time" content="2019-10-27T14:03:01.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Kubernetes(三) 如何从外部访问服务</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/09/kubernetes-2-deploy/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/09/kubernetes-1-installation/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&text=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&is_video=false&description=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Kubernetes(三) 如何从外部访问服务&body=Check out this article: https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&name=Kubernetes(三) 如何从外部访问服务&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&t=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#将服务暴露给外部客户端的几种方式"><span class="toc-number">2.</span> <span class="toc-text">将服务暴露给外部客户端的几种方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#准备"><span class="toc-number">3.</span> <span class="toc-text">准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#port-forward"><span class="toc-number">4.</span> <span class="toc-text">port-forward</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NodePort"><span class="toc-number">5.</span> <span class="toc-text">NodePort</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LoadBalance"><span class="toc-number">6.</span> <span class="toc-text">LoadBalance</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ingress"><span class="toc-number">7.</span> <span class="toc-text">Ingress</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">8.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">9.</span> <span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#附录"><span class="toc-number">10.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Deployment-yaml"><span class="toc-number">10.1.</span> <span class="toc-text">[1] Deployment.yaml</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-K8sTestApplication-java"><span class="toc-number">10.2.</span> <span class="toc-text">[2] K8sTestApplication.java</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推荐阅读"><span class="toc-number">11.</span> <span class="toc-text">推荐阅读:</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Kubernetes(三) 如何从外部访问服务
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-10-27T14:03:01.000Z" itemprop="datePublished">2019-10-27</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <blockquote>
+<p>Kubernetes教程之对外暴露服务</p>
+<p>文章地址: <a href="https://blog.piaoruiqing.com/" target="_blank" rel="noopener">https://blog.piaoruiqing.com/</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>通过前文的讲解,<a href="https://blog.piaoruiqing.com/blog/2019/09/17/搭建k8s/" target="_blank" rel="noopener">《跟着官方文档从零搭建K8S》</a>、<a href="https://blog.piaoruiqing.com/blog/2019/09/28/kubernetes应用部署/" target="_blank" rel="noopener">《应用部署》</a>相信读者已经对Kubernetes安装及部署应用有了一定的了解. 接下来, 本文将针对如何将服务暴露给外部进行讲解.</p>
+<p>阅读这篇文章你能收获到: </p>
+<ul>
+<li>了解Kubernetes暴露服务的几种方案及其优缺点.</li>
+</ul>
+<p>阅读本文你需要:</p>
+<ul>
+<li>了解基本的Kubernetes命令.</li>
+<li>有一个Kubernetes环境</li>
+</ul>
+<h2 id="将服务暴露给外部客户端的几种方式"><a href="#将服务暴露给外部客户端的几种方式" class="headerlink" title="将服务暴露给外部客户端的几种方式"></a>将服务暴露给外部客户端的几种方式</h2><ul>
+<li>通过<code>port-forward</code>转发, 这种方式在之前的文章中有提到过, 操作方便、适合调试时使用, <strong>不适用于生产环境</strong>.</li>
+<li>通过<code>NodePort</code>, 此时集群中每一个节点(Node)都会监听指定端口, 我们通过任意节点的端口即可访问到指定服务. 但过多的服务会开启大量端口难以维护.</li>
+<li>通过<code>LoadBalance</code>来暴露服务. <code>LoadBalance(负载均衡 LB)</code>通常由云服务商提供, 如果云环境中不提供LB服务, 我们通常直接使用<code>Ingress</code>, 或使用<code>MetalLB</code>来自行配置LB.</li>
+<li>通过<code>Ingress</code>公开多个服务. <code>Ingress</code>公开了从群集外部到群集内 <code>services</code> 的HTTP和HTTPS路由. 流量路由由<code>Ingress</code>资源上定义的规则控制. 在云服务商不提供LB服务的情况下, 我们可以直接使用<code>Ingress</code>来暴露服务. (另外, 使用<code>LB + Ingress</code>的部署方案可以避免过多LB应用带来的花费).</li>
+</ul>
+<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>在开始之前, 笔者已经创建好了测试应用, 代码过长此处略去, 详见<strong>附录[1]</strong>和<strong>附录[2]</strong></p>
+<p>我们通过<code>kubectl get pods</code>查看pod列表.</p>
+<blockquote>
+<p>指的一提的是, 我们可以通过<code>--namespace</code>参数查看指定命名空间的pod列表, 也可以通过<code>--all-namespaces</code>来查看全部命名空间的pod列表.</p>
+<p>由于没有指定命名空间,所以应用被放到<code>default</code>中了.</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># kubectl get pods --namespace default</span></span><br><span class="line">NAME                        READY   STATUS    RESTARTS   AGE</span><br><span class="line">k8s-test-578b77cd47-sw5pd   1/1     Running   0          6m29s</span><br><span class="line">k8s-test-578b77cd47-v6kmp   1/1     Running   0          6m29s</span><br></pre></td></tr></table></figure>
+
+<h2 id="port-forward"><a href="#port-forward" class="headerlink" title="port-forward"></a>port-forward</h2><blockquote>
+<p><code>port-forward</code>这种方式访问pod, 可以指定pod实例, 简单方便, 很适合调试之用.</p>
+</blockquote>
+<p>通过<code>kubectl port-forward</code>来配置转发:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># kubectl port-forward --address 0.0.0.0 k8s-test-578b77cd47-sw5pd 9999:8080</span></span><br><span class="line">Forwarding from 0.0.0.0:9999 -&gt; 8080</span><br></pre></td></tr></table></figure>
+
+<p>此时, 我们可以通过通过访问宿主机的<code>9999</code>端口来访问到<code>k8s-test-578b77cd47-sw5pd</code>的<code>8080</code>端口.</p>
+<blockquote>
+<p><code>/k8s-test/timestamp</code>是该示例应用唯一一个api, 用于获取当前时间戳</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># curl http://10.33.30.95:9999/k8s-test/timestamp</span></span><br><span class="line">1571151584224</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="NodePort"><a href="#NodePort" class="headerlink" title="NodePort"></a>NodePort</h2><blockquote>
+<p>集群中每一个节点(Node)都会监听指定端口, 我们通过任意节点的端口即可访问到指定服务. 但过多的服务会开启大量端口难以维护.</p>
+<p>参考文档: <a href="https://kubernetes.io/docs/concepts/services-networking/service/#nodeport" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/services-networking/service/#nodeport</a></p>
+</blockquote>
+<p>创建一个<code>Service</code>, 并指定其类型为<code>NodePort</code>. </p>
+<p><code>k8s-test-service.yaml</code></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">k8s-test-service</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">k8s-test</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">test</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">80</span>					<span class="comment"># 服务端口, 内部可访问</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">8080</span>	<span class="comment"># 目标端口, 此处指的是pod的8080端口</span></span><br><span class="line">      <span class="attr">nodePort:</span> <span class="number">30080</span>		<span class="comment"># 节点端口, 外部可访问</span></span><br><span class="line">      <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br></pre></td></tr></table></figure>
+
+<p>执行<code>kubectl apply -f k8s-test-service.yaml</code>发布这个Service.</p>
+<p>通过<code>kubectl get services</code>可查看Service列表如下: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># kubectl get services</span></span><br><span class="line">NAME               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE</span><br><span class="line">k8s-test-service   NodePort    10.244.234.143   &lt;none&gt;        80:30080/TCP   8s</span><br><span class="line">kubernetes         ClusterIP   10.244.0.1       &lt;none&gt;        443/TCP        32d</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到, 30080端口已经被绑定到该服务的80端口.</p>
+<p>尝试通过node节点来访问应用:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos3 ~]<span class="comment"># curl http://10.33.30.94:30080/k8s-test/timestamp</span></span><br><span class="line">1571152525336</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="LoadBalance"><a href="#LoadBalance" class="headerlink" title="LoadBalance"></a>LoadBalance</h2><blockquote>
+<p>参考文档: </p>
+<ol>
+<li><a href="https://metallb.universe.tf/" target="_blank" rel="noopener">https://metallb.universe.tf/</a></li>
+<li><a href="https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer</a></li>
+</ol>
+</blockquote>
+<p><code>LoadBalance(负载均衡 LB)</code>通常由云服务商提供. 如果环境不支持LB, 那么创建的LoadBalance将始终处于<code>&lt;pending&gt;</code>状态:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># kubectl get services</span></span><br><span class="line">NAME               TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE</span><br><span class="line">k8s-test-service   LoadBalancer   10.244.29.126   &lt;pending&gt;     80:32681/TCP   13s</span><br><span class="line">kubernetes         ClusterIP      10.244.0.1      &lt;none&gt;        443/TCP        33d</span><br></pre></td></tr></table></figure>
+
+<p>如果想要在本地开发环境测试LB, 我们可以选择<a href="https://metallb.universe.tf/" target="_blank" rel="noopener">MetalLB</a>. 它是一个负载均衡实现. 安装方式此处不进行展开, 可参考<a href="https://metallb.universe.tf/" target="_blank" rel="noopener">官方文档</a></p>
+<p>当我们的环境支持LB时, 我们可以创建如下Service, 来暴露服务:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">k8s-test-service</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">k8s-test</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">test</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">80</span>					<span class="comment"># 服务端口</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">8080</span>	<span class="comment"># 目标端口, 此处指的是pod的8080端口</span></span><br><span class="line">      <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">LoadBalancer</span></span><br></pre></td></tr></table></figure>
+
+<p>执行<code>kubectl apply -f k8s-test-lb.yaml</code>命令发布配置. 此时可以查看到Service已经有了EXTERNAL-IP(10.33.30.2). 如下: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># kubectl get services</span></span><br><span class="line">NAME               TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE</span><br><span class="line">k8s-test-service   LoadBalancer   10.244.151.128   10.33.30.2    80:31277/TCP   2s</span><br><span class="line">kubernetes         ClusterIP      10.244.0.1       &lt;none&gt;        443/TCP        33d</span><br></pre></td></tr></table></figure>
+
+<p>尝试通过LB的IP来访问应用, 如下: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 k8s-test]<span class="comment"># curl http://10.33.30.2/k8s-test/timestamp</span></span><br><span class="line">1571235898264</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h2><blockquote>
+<p> <code>Ingress</code>公开了从群集外部到群集内 <code>services</code> 的HTTP和HTTPS路由. 流量路由由<code>Ingress</code>资源上定义的规则控制. </p>
+<p> 参考文档: <a href="https://kubernetes.github.io/ingress-nginx/deploy/" target="_blank" rel="noopener">https://kubernetes.github.io/ingress-nginx/deploy/</a></p>
+</blockquote>
+<p>我们使用ingress controller的nginx实现来进行测试. 首先下载部署文件: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml</span><br></pre></td></tr></table></figure>
+
+<p>编辑文件<code>vim mandatory.yaml</code>, 加入以下内容: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">template:</span></span><br><span class="line">  <span class="attr">spec:</span></span><br><span class="line">    <span class="attr">hostNetwork:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>hostNetwork</code>: 开启hostNetwork, 可以使ingress绑定到主机的80和443端口.</p>
+</li>
+<li><p>访问ingress有多种方式, (1). 通过hostNetwork直接绑定到80和443端口, (2). 通过NodePort在Node上暴露端口(但这种方式只能绑定固定范围的端口, 默认值 30000-32767), (3). 通过LoadBalance, 这种方式和NodePort其实都是通过Service来暴露, 只不过是Service的不同类型.</p>
+</li>
+<li><p>mandatory.yaml中<code>template</code>只有一个, 很好找. (tips: 在vim中可以用<code>/</code>进行查找).</p>
+</li>
+<li><p><code>Ingress Controller</code>: 是一个反向代理程序, 它负责解析 Ingress 的反向代理规则.</p>
+</li>
+<li><p><code>Ingress</code>: Ingress 是反向代理规则. 不要混淆<code>Ingress Controller</code>和<code>Ingress</code>的概念.</p>
+</li>
+</ul>
+<p>发布完成后, 我们创建一个<code>Ingress</code>来测试, 内容如下: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-ingress</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="string">/k8s-test</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">http:</span></span><br><span class="line">        <span class="attr">paths:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/k8s-test</span></span><br><span class="line">            <span class="attr">backend:</span></span><br><span class="line">              <span class="attr">serviceName:</span> <span class="string">k8s-test-service</span></span><br><span class="line">              <span class="attr">servicePort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>尝试访问: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@nas-centos1 ingress]<span class="comment"># curl http://10.33.30.94/k8s-test/timestamp</span></span><br><span class="line">1571321623058</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>通常地, 我们会考虑 <code>LoadBalance</code>和<code>Ingress</code>配合使用. 一方面是只是用LB会产生大量的花费, 另一方面大量的LB同样会提高维护成本. 而LB配合Ingress使用, 通过不同的path来区分服务能达到很棒的效果. (这里和通过Nginx来暴露多个服务的原理基本相同)</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://kubernetes.io/" target="_blank" rel="noopener">https://kubernetes.io</a></li>
+</ul>
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="1-Deployment-yaml"><a href="#1-Deployment-yaml" class="headerlink" title="[1] Deployment.yaml"></a>[1] Deployment.yaml</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">k8s-test</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">k8s-test</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">k8s-test</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">k8s-test</span></span><br><span class="line">        <span class="attr">env:</span> <span class="string">test</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">k8s-test</span></span><br><span class="line">          <span class="attr">image:</span> <span class="string">registry.cn-hangzhou.aliyuncs.com/piaoruiqing/k8s-test:0.0.1</span></span><br><span class="line">          <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">          <span class="attr">ports:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">http-port</span></span><br><span class="line">              <span class="attr">containerPort:</span> <span class="number">8080</span></span><br><span class="line">      <span class="attr">imagePullSecrets:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">docker-registry-secret</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">Always</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">k8s-test</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-K8sTestApplication-java"><a href="#2-K8sTestApplication-java" class="headerlink" title="[2] K8sTestApplication.java"></a>[2] K8sTestApplication.java</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> piaoruiqing</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@description</span>: k8s test</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: 2019/09/22 10:01</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="meta">@RequestMapping</span>(value = <span class="string">"/k8s-test"</span>)</span><br><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">K8sTestApplication</span> </span>&#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * get timestamp</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@GetMapping</span>(value = <span class="string">"/timestamp"</span>)</span><br><span class="line">    <span class="keyword">public</span> ResponseEntity&lt;?&gt; getTimestamp() &#123;</span><br><span class="line">        <span class="keyword">return</span> ResponseEntity.ok(System.currentTimeMillis() + <span class="string">"\n"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SpringApplication.run(K8sTestApplication<span class="class">.<span class="keyword">class</span>, <span class="title">args</span>)</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+<h2 id="推荐阅读"><a href="#推荐阅读" class="headerlink" title="推荐阅读:"></a>推荐阅读:</h2><ul>
+<li><a href="https://juejin.im/post/5d7fb46d5188253264365dcf" target="_blank" rel="noopener">Kubernetes(一) 跟着官方文档从零搭建K8S</a></li>
+</ul>
+<div style="border-width: 1px;border-style:dashed;border-color: gray; background-color: #f9f9f9;width: 90%;padding: 8px;font-size: 12px;">
+    <strong>[版权声明]</strong><br/>
+    本文发布于<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿的博客</a>, 允许非商业用途转载, 但转载必须保留原作者<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">朴瑞卿</a> 及链接:<a href="http://blog.piaoruiqing.com" target="_blank" rel="noopener">http://blog.piaoruiqing.com</a>. 
+    如有授权方面的协商或合作, 请联系邮箱: <a href="mailto:piaoruiqing@gmail.com">piaoruiqing@gmail.com</a>.
+</div>
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#将服务暴露给外部客户端的几种方式"><span class="toc-number">2.</span> <span class="toc-text">将服务暴露给外部客户端的几种方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#准备"><span class="toc-number">3.</span> <span class="toc-text">准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#port-forward"><span class="toc-number">4.</span> <span class="toc-text">port-forward</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NodePort"><span class="toc-number">5.</span> <span class="toc-text">NodePort</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LoadBalance"><span class="toc-number">6.</span> <span class="toc-text">LoadBalance</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ingress"><span class="toc-number">7.</span> <span class="toc-text">Ingress</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">8.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">9.</span> <span class="toc-text">参考文献</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#附录"><span class="toc-number">10.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Deployment-yaml"><span class="toc-number">10.1.</span> <span class="toc-text">[1] Deployment.yaml</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-K8sTestApplication-java"><span class="toc-number">10.2.</span> <span class="toc-text">[2] K8sTestApplication.java</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推荐阅读"><span class="toc-number">11.</span> <span class="toc-text">推荐阅读:</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&text=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&is_video=false&description=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Kubernetes(三) 如何从外部访问服务&body=Check out this article: https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&title=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&name=Kubernetes(三) 如何从外部访问服务&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/10/kubernetes-3-access-service/&t=Kubernetes(三) 如何从外部访问服务" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

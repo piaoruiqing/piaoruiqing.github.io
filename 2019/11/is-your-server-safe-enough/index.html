@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="你的服务器够安全吗 一份不一定很全的服务器安全防范措施, 但值得看看.  (╯-_-)╯~╩╩.  文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;2019&#x2F;11&#x2F;24&#x2F;is-your-server-safe-enough&#x2F;  前言近期服务器经常被暴力扫描、攻击, 故周末花时间打理下服务器, 将一些可能存在的风险处理掉. 笔者根据实践总结出一份简单的防范措施列表, 希望能对你">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2019&#x2F;11&#x2F;is-your-server-safe-enough">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="你的服务器够安全吗 一份不一定很全的服务器安全防范措施, 但值得看看.  (╯-_-)╯~╩╩.  文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;2019&#x2F;11&#x2F;24&#x2F;is-your-server-safe-enough&#x2F;  前言近期服务器经常被暴力扫描、攻击, 故周末花时间打理下服务器, 将一些可能存在的风险处理掉. 笔者根据实践总结出一份简单的防范措施列表, 希望能对你">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-2.jpg">
+<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-3.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
+<meta property="article:published_time" content="2019-11-24T14:27:52.000Z">
+<meta property="article:modified_time" content="2019-11-24T14:27:52.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>2019/11/is-your-server-safe-enough</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/12/mysql-knowledge-point/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/11/block-ip-by-analyzing-nginx-logs/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&text=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&is_video=false&description=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/11/is-your-server-safe-enough&body=Check out this article: https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&name=2019/11/is-your-server-safe-enough&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&t=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#你的服务器够安全吗"><span class="toc-number">1.</span> <span class="toc-text">你的服务器够安全吗</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一-防火墙"><span class="toc-number">1.2.</span> <span class="toc-text">一. 防火墙</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二-利用内网穿透工具"><span class="toc-number">1.3.</span> <span class="toc-text">二. 利用内网穿透工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三-隐藏无用信息"><span class="toc-number">1.4.</span> <span class="toc-text">三. 隐藏无用信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四-限流"><span class="toc-number">1.5.</span> <span class="toc-text">四. 限流</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#五-祸水东引"><span class="toc-number">1.6.</span> <span class="toc-text">五. 祸水东引</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#六-禁用root远程登录"><span class="toc-number">1.7.</span> <span class="toc-text">六. 禁用root远程登录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#七-其他"><span class="toc-number">1.8.</span> <span class="toc-text">七. 其他</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.9.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#欢迎关注公众号-代码如诗"><span class="toc-number">1.10.</span> <span class="toc-text">欢迎关注公众号(代码如诗)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推荐阅读"><span class="toc-number">1.11.</span> <span class="toc-text">推荐阅读</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        2019/11/is-your-server-safe-enough
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-11-24T14:27:52.000Z" itemprop="datePublished">2019-11-24</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="你的服务器够安全吗"><a href="#你的服务器够安全吗" class="headerlink" title="你的服务器够安全吗"></a>你的服务器够安全吗</h1><blockquote>
+<p>一份不一定很全的服务器安全防范措施, 但值得看看.  (╯-_-)╯~╩╩. </p>
+<p>文章地址: <a href="https://blog.piaoruiqing.com/2019/11/24/is-your-server-safe-enough/" target="_blank" rel="noopener">https://blog.piaoruiqing.com/2019/11/24/is-your-server-safe-enough/</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>近期服务器经常被暴力扫描、攻击, 故周末花时间打理下服务器, 将一些可能存在的风险处理掉. 笔者根据实践总结出一份简单的防范措施列表, 希望能对你有帮助. </p>
+<p>阅读本文你能收获到: </p>
+<ul>
+<li>一些服务器安全防范措施.</li>
+<li>快乐 (如果学习能使你快乐的话 (￣.￣) )</li>
+</ul>
+<h2 id="一-防火墙"><a href="#一-防火墙" class="headerlink" title="一. 防火墙"></a>一. 防火墙</h2><p>防火墙采用白名单策略, 只开放必要端口. 如: 80/443以及ssh登录端口.</p>
+<p>而数据库、缓存等端口, 最好只允许本地访问, 若需要调试, 建议使用白名单IP、代理等方法进行连接.</p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg" alt="80-443"></p>
+<h2 id="二-利用内网穿透工具"><a href="#二-利用内网穿透工具" class="headerlink" title="二. 利用内网穿透工具"></a>二. 利用内网穿透工具</h2><blockquote>
+<p>参考文档: <a href="https://github.com/fatedier/frp/" target="_blank" rel="noopener">https://github.com/fatedier/frp/</a></p>
+</blockquote>
+<p>对于有调试需求的服务器而言, 数据库、缓存、消息队列等端口需要开放. 而直接开放端口会给服务器带来不必要的安全隐患. 此时我们必须对访问者进行限制, 如: IP白名单、VPN等. 除此之外, 笔者推荐一个内网穿透工具用来辅助建立调试环境 —— <a href="https://github.com/fatedier/frp" target="_blank" rel="noopener">FRP</a></p>
+<p>FRP是一个可用于内网穿透的高性能的反向代理应用, 有多种穿透方式, 可以指定端口进行代理. 我们可以在服务器启动服务端(frps)和客户端(frpc)两个服务, 本地客户端的frpc通过frps监听的唯一端口与服务端的frpc建立连接, 这样就能将服务器上只能内部访问的端口映射到开发者电脑本地端口. </p>
+<p>使用FRP的优势: 指定端口、可压缩流量、可加密、服务端只需要暴露frps的端口.</p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-2.jpg" alt="frps-frpc"></p>
+<h2 id="三-隐藏无用信息"><a href="#三-隐藏无用信息" class="headerlink" title="三. 隐藏无用信息"></a>三. 隐藏无用信息</h2><blockquote>
+<p>参考文档: </p>
+<p><a href="http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header" target="_blank" rel="noopener">1). http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header</a></p>
+<p><a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens" target="_blank" rel="noopener">2). http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens</a></p>
+<p><a href="http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html#fastcgi_hide_header" target="_blank" rel="noopener">3. http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html#fastcgi_hide_header</a></p>
+</blockquote>
+<p>通过服务器返回的信息, 攻击者能从中发现一些漏洞, 比如nginx版本、所使用的web服务器等. 而这些信息对于用户来说都是非必要的. 笔者随便找了个网站查看, 如图: </p>
+<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-3.jpg" alt=""></p>
+<p>这些细节都可能为攻击者提供途径. 所以有必要屏蔽掉这些信息. </p>
+<ol>
+<li><a href="http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header" target="_blank" rel="noopener">proxy_hide_header {Your-Header}</a>: nginx中, 通过<strong>proxy_hide_header</strong>可以隐藏掉上游服务返回的某些header.</li>
+<li><a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens" target="_blank" rel="noopener">server_tokens off</a>: <a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens" target="_blank" rel="noopener">server_tokens</a>是nginx版本信息开关, 可以开启或隐藏<strong>错误页</strong>或header的<strong>Server</strong>字段后面带的版本号.</li>
+<li><a href="http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html#fastcgi_hide_header" target="_blank" rel="noopener">fastcgi_hide_header X-Powered-By</a>: 如果您使用的是php-fpm, 这个配置可以隐藏掉header中php及版本信息.</li>
+</ol>
+<p>配置完成后执行<code>nginx -s reload</code>后配置即生效. </p>
+<h2 id="四-限流"><a href="#四-限流" class="headerlink" title="四. 限流"></a>四. 限流</h2><blockquote>
+<p>参考文档: <a href="http://nginx.org/en/docs/http/ngx_http_limit_req_module.html" target="_blank" rel="noopener">http://nginx.org/en/docs/http/ngx_http_limit_req_module.html</a></p>
+</blockquote>
+<p>用户正常的访问行为, 不会产生过于频繁的请求, 限流可以防止<strong>某些不安分的IP</strong>因某些目的而频繁访问服务器而导致资源耗尽, 影响正常用户的访问体验.</p>
+<p>一般地, 我们可以通过nginx配置<a href="http://nginx.org/en/docs/http/ngx_http_limit_req_module.html" target="_blank" rel="noopener">ngx_http_limit_req_module</a>进行限流: </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">http &#123;</span><br><span class="line">    limit_req_zone <span class="variable">$binary_remote_addr</span> zone=one:10m rate=1r/s;</span><br><span class="line">    ...</span><br><span class="line">    server &#123;</span><br><span class="line">        ...</span><br><span class="line">        location /search/ &#123;</span><br><span class="line">            limit_req zone=one burst=5;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>limit_req_zone…</strong>: 设置一个大小为10M的共享区域, 命名为<strong>one</strong>, 其KEY为<code>$binary_remote_addr</code>即IP, 访问速率限制为1次/秒.</li>
+<li><strong>limit_req…</strong>: 路径为search的location使用共享区域<strong>one</strong>进行限流, 突发请求限制为5. (如果只限制了1r/s, 将会严格按照每秒一次的请求进行限制, 但对于用户来说, 点开网页可能会并发请求数个资源, 如此死板的限制对于体验并不友好, 所以我们还需要设置突发的请求限制)</li>
+</ul>
+<h2 id="五-祸水东引"><a href="#五-祸水东引" class="headerlink" title="五. 祸水东引"></a>五. 祸水东引</h2><blockquote>
+<p>总之一句话, 引流到扛得住高并发的静态页. 比如GitPage.</p>
+<p>参考文章: <a href="https://juejin.im/post/5dd10c2c6fb9a020156232b5" target="_blank" rel="noopener">我是如何通过Nginx日志实时封禁风险IP的</a></p>
+</blockquote>
+<p>相信不少站长都了解被cc或ddos攻击支配的恐惧. </p>
+<p>尤其对于个人主页等小站来说, 购买高防服务器或购买各种防护服务可能性价比并不高. 但普通服务器遇到稍大规模的攻击(也许这规模并不是真的很大), 可能服务器直接就挂了, 就算配置了页面的静态缓存, 也不一定能扛得住多大规模的攻击, 况且流量挺贵的.</p>
+<p>对此笔者的方案是: </p>
+<ol>
+<li>实时分析访问日志, 对每个IP进行危险等级评分.</li>
+<li>锁定异常IP, 将这些IP的全部请求通过302临时重定向到GitPage备份站. </li>
+<li>对于危险等级更高的IP, 直接使用<code>ipset+iptables</code>封禁</li>
+</ol>
+<p>之所以对于一般危险等级的IP进行重定向, 主要目的是: </p>
+<ol>
+<li>节约流量, 节约服务器资源(这点对动态网站尤为重要)</li>
+<li>劝退攻击者: 大家无冤无仇, 您去找更好搞的站点攻击, 请不要在这里耗费太多时间.</li>
+<li>防止误杀, 异常IP评估可能存在误差, 直接封禁对于访问者而言极其不友好, 会白白损失用户. 服务降级总比不提供服务要好. 故选择先临时重定向, 若该IP行为仍旧不规范, 此时再封禁也不晚.</li>
+</ol>
+<p>下图引自我的前一篇文章<a href="https://juejin.im/post/5dd10c2c6fb9a020156232b5" target="_blank" rel="noopener">《我是如何通过Nginx日志实时封禁风险IP的》</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    participant Nginx</span><br><span class="line">    participant Filebeat</span><br><span class="line">    participant Redis</span><br><span class="line">    participant Monitor</span><br><span class="line">    participant Actuator</span><br><span class="line">    Nginx -&gt;&gt; Filebeat: accessLog(File)</span><br><span class="line">    Filebeat -&gt;&gt; Redis: accessLog(JSON)</span><br><span class="line">    loop Always</span><br><span class="line">    Redis -&gt;&gt; Monitor: accessLog(JSON)</span><br><span class="line">    activate Monitor</span><br><span class="line">    Monitor -&gt;&gt; Monitor: Analysis</span><br><span class="line">    Monitor -&gt;&gt; Monitor: Risk assessment</span><br><span class="line">    Monitor -&gt;&gt; Actuator: Banned</span><br><span class="line">    Monitor -&gt;&gt; Monitor: Storing</span><br><span class="line">    end</span><br><span class="line">    deactivate Monitor</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="六-禁用root远程登录"><a href="#六-禁用root远程登录" class="headerlink" title="六. 禁用root远程登录"></a>六. 禁用root远程登录</h2><p>禁止使用root用户远程登录, 仅允许某个权限少的普通用户远程登录, 登录后再执行<code>su</code>提权.</p>
+<p>对于允许远程登录的账户, 建议不要使用密码登录, <strong>更不能使用简单密码</strong>. 建议使用秘钥登录. </p>
+<p><code>ssh-keygen</code>生成秘钥对, 将公钥放入<code>authorized_keys</code>文件中即可.</p>
+<h2 id="七-其他"><a href="#七-其他" class="headerlink" title="七. 其他"></a>七. 其他</h2><ul>
+<li>定期备份, 建议使用crontab配置备份定时任务. 并且定期将重要数据冷备份.</li>
+<li>及时更新系统, 修复安全漏洞.</li>
+<li>只安装需要的、用不着就关闭</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>服务器安全事大, 对于开发、运维、测试等工作来说, 安全都是重点关注的问题, 养成良好的习惯, 防患于未然.</p>
+<h2 id="欢迎关注公众号-代码如诗"><a href="#欢迎关注公众号-代码如诗" class="headerlink" title="欢迎关注公众号(代码如诗)"></a>欢迎关注公众号(代码如诗)</h2><img class="image " style="width: 500px;margin: 0 auto;display: block;" src="https://g.cdn.piaoruiqing.cn/image/business_card.jpg" alt="代码如诗(poetic_code)" scale="0">
+
+<h2 id="推荐阅读"><a href="#推荐阅读" class="headerlink" title="推荐阅读"></a>推荐阅读</h2><ul>
+<li><a href="https://blog.piaoruiqing.com/2019/11/17/block-ip-by-analyzing-nginx-logs/" target="_blank" rel="noopener">我是如何通过Nginx日志实时封禁风险IP的</a></li>
+<li><a href="https://blog.piaoruiqing.com/2019/08/05/openapi-gateway-design/" target="_blank" rel="noopener">开放API网关实践(一) ——设计一个API网关</a></li>
+<li><a href="https://blog.piaoruiqing.com/2019/08/11/openapi-gateway-replay-attack/" target="_blank" rel="noopener">开放API网关实践(二) —— 重放攻击及防御</a></li>
+<li><a href="https://blog.piaoruiqing.com/2019/08/26/openapi-gateway-restriction/" target="_blank" rel="noopener">开放API网关实践(三) —— 限流</a></li>
+<li><a href="https://blog.piaoruiqing.com/2019/09/17/kubernetes-1-installation/" target="_blank" rel="noopener">Kubernetes(一) 跟着官方文档从零搭建K8S</a></li>
+<li><a href="https://blog.piaoruiqing.com/blog/2019/09/28/kubernetes应用部署/" target="_blank" rel="noopener">Kubernetes(二) 应用部署</a></li>
+<li><a href="https://blog.piaoruiqing.com/2019/10/20/kubernetes-3-access-service/" target="_blank" rel="noopener">Kubernetes(三) 如何从外部访问服务</a></li>
+</ul>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#你的服务器够安全吗"><span class="toc-number">1.</span> <span class="toc-text">你的服务器够安全吗</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一-防火墙"><span class="toc-number">1.2.</span> <span class="toc-text">一. 防火墙</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二-利用内网穿透工具"><span class="toc-number">1.3.</span> <span class="toc-text">二. 利用内网穿透工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三-隐藏无用信息"><span class="toc-number">1.4.</span> <span class="toc-text">三. 隐藏无用信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四-限流"><span class="toc-number">1.5.</span> <span class="toc-text">四. 限流</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#五-祸水东引"><span class="toc-number">1.6.</span> <span class="toc-text">五. 祸水东引</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#六-禁用root远程登录"><span class="toc-number">1.7.</span> <span class="toc-text">六. 禁用root远程登录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#七-其他"><span class="toc-number">1.8.</span> <span class="toc-text">七. 其他</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.9.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#欢迎关注公众号-代码如诗"><span class="toc-number">1.10.</span> <span class="toc-text">欢迎关注公众号(代码如诗)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#推荐阅读"><span class="toc-number">1.11.</span> <span class="toc-text">推荐阅读</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&text=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&is_video=false&description=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/11/is-your-server-safe-enough&body=Check out this article: https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&title=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&name=2019/11/is-your-server-safe-enough&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/11/is-your-server-safe-enough/&t=2019/11/is-your-server-safe-enough" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

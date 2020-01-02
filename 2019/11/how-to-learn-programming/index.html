@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="我想学习编程, 但不知道从哪里开始 原文地址: I Want to Learn Programming but I Don’t Know where to Start 原文作者: Robyn Silber 译文地址: 我想学习编程, 但不知道从哪里开始 译者: 朴瑞卿  常常被问的问题作为导师, 笔者经常被问到以下问题:   “如果我是新手, 我应该学习哪种编程语言? ” “哪种编程语言最适合工作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2019&#x2F;11&#x2F;how-to-learn-programming">
+<meta property="og:url" content="https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/index.html">
+<meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
+<meta property="og:description" content="我想学习编程, 但不知道从哪里开始 原文地址: I Want to Learn Programming but I Don’t Know where to Start 原文作者: Robyn Silber 译文地址: 我想学习编程, 但不知道从哪里开始 译者: 朴瑞卿  常常被问的问题作为导师, 笔者经常被问到以下问题:   “如果我是新手, 我应该学习哪种编程语言? ” “哪种编程语言最适合工作">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-11-03T16:00:18.000Z">
+<meta property="article:modified_time" content="2019-11-03T16:00:18.000Z">
+<meta property="article:author" content="朴瑞卿">
+<meta property="article:tag" content="草堂笺">
+<meta property="article:tag" content="朴瑞卿">
+<meta property="article:tag" content="朴瑞卿的博客">
+<meta property="article:tag" content="技术博客">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>2019/11/how-to-learn-programming</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+      
+<link rel="stylesheet" href="/css/rtl.css">
+
+    
+    <!-- rss -->
+    
+    
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/11/block-ip-by-analyzing-nginx-logs/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="/2019/09/kubernetes-2-deploy/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&text=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&is_video=false&description=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/11/how-to-learn-programming&body=Check out this article: https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&name=2019/11/how-to-learn-programming&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&t=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#我想学习编程-但不知道从哪里开始"><span class="toc-number">1.</span> <span class="toc-text">我想学习编程, 但不知道从哪里开始</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#常常被问的问题"><span class="toc-number">1.1.</span> <span class="toc-text">常常被问的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#顶级编程语言"><span class="toc-number">1.2.</span> <span class="toc-text">顶级编程语言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何选择一门编程语言"><span class="toc-number">1.3.</span> <span class="toc-text">如何选择一门编程语言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#几句忠告"><span class="toc-number">1.4.</span> <span class="toc-text">几句忠告</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一-计算机科学基础"><span class="toc-number">1.5.</span> <span class="toc-text">一. 计算机科学基础</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二-命题逻辑-可选"><span class="toc-number">1.6.</span> <span class="toc-text">二. 命题逻辑(可选)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三-Java编程"><span class="toc-number">1.7.</span> <span class="toc-text">三. Java编程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四-算法和数据结构"><span class="toc-number">1.8.</span> <span class="toc-text">四. 算法和数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#五-Android开发"><span class="toc-number">1.9.</span> <span class="toc-text">五. Android开发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#有用的资源"><span class="toc-number">1.10.</span> <span class="toc-text">有用的资源</span></a></li></ol></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        2019/11/how-to-learn-programming
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">草堂笺 - 朴瑞卿的博客</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-11-03T16:00:18.000Z" itemprop="datePublished">2019-11-04</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="我想学习编程-但不知道从哪里开始"><a href="#我想学习编程-但不知道从哪里开始" class="headerlink" title="我想学习编程, 但不知道从哪里开始"></a>我想学习编程, 但不知道从哪里开始</h1><blockquote>
+<p>原文地址: <a href="https://codeburst.io/i-want-to-learn-programming-but-i-dont-know-where-to-start-80dd2d55e1fd" target="_blank" rel="noopener">I Want to Learn Programming but I Don’t Know where to Start</a></p>
+<p>原文作者: <a href="https://codeburst.io/@programm.r" target="_blank" rel="noopener">Robyn Silber</a></p>
+<p>译文地址: <a href="https://blog.piaoruiqing.com/blog/2019/11/03/我想学习编程但不知道从哪里开始/" target="_blank" rel="noopener">我想学习编程, 但不知道从哪里开始</a></p>
+<p>译者: <a href="https://blog.piaoruiqing.com/" target="_blank" rel="noopener">朴瑞卿</a></p>
+</blockquote>
+<h2 id="常常被问的问题"><a href="#常常被问的问题" class="headerlink" title="常常被问的问题"></a>常常被问的问题</h2><p>作为导师, 笔者经常被问到以下问题: </p>
+<ul>
+<li><em>“如果我是新手, 我应该学习哪种编程语言? ”</em></li>
+<li><em>“哪种编程语言最适合工作? ”</em></li>
+<li><em>“最流行的编程语言是什么? ”</em></li>
+</ul>
+<h2 id="顶级编程语言"><a href="#顶级编程语言" class="headerlink" title="顶级编程语言"></a>顶级编程语言</h2><p>如果您正在寻找顶级编程语言的官方排名, 可以在这里找到: <a href="https://spectrum.ieee.org/static/interactive-the-top-programming-languages-2017" target="_blank" rel="noopener">IEEE Spectrum top programming languages</a></p>
+<p>该列表很适合检查指定的语言是否还在广泛使用. 但如果您不熟悉编程, 笔者建议您不要仅仅通过这个列表来选择一门语言.</p>
+<blockquote>
+<p><em>译者注: PHP不一定是最好的开发语言呢…</em>(破音)</p>
+</blockquote>
+<h2 id="如何选择一门编程语言"><a href="#如何选择一门编程语言" class="headerlink" title="如何选择一门编程语言"></a>如何选择一门编程语言</h2><p>计算机科学完全是一个累积研究领域. 这意味着, 每一个后续的知识点都是以先前的知识点为基础.</p>
+<p>如果您曾在学校中竭尽全力学习编程(或任何其它科学领域)但失败了——或许问题并不出在你身上. 任何累积性学科的优秀教授都去会精心规划课程. 只要每个学生都充分准备并满足前提条件, (教授)对于学生的先验知识的预期就应该是明确的. 一个好的教授理解这种预期并且假定没有超出该范围的知识. 因此, 任何超出预期范围的知识点都必须要进行教授. 课程中的每个知识点都是循序渐进的.</p>
+<p>当一个学科是累积性的, 在设计课程或学习路径时必须一丝不苟. </p>
+<p>综上所述, 不要依据排名选择语言. 选择一种您拥有完整的学习路径且无需对先验知识进行任何假设的语言.</p>
+<blockquote>
+<p><em>译者注: 选择编程语言要进行综合考量, 如语言学习曲线、社区活跃度、职位需求量(如果您是为了工作的话)、您自身的基础及意向从事的行业领域等</em></p>
+</blockquote>
+<h2 id="几句忠告"><a href="#几句忠告" class="headerlink" title="几句忠告"></a>几句忠告</h2><p>在开始学习编码之前, 请务必反复思考一下笔者的观点: <strong><em>计算机科学中的一切都循序渐进的</em></strong>.</p>
+<p>我喜欢重申这一点, 因为有追求的程序员可能犯的最大错误就是, 由于错误地认为自己不够聪明去学习编程而放弃. 学习编码与您的智力无关. 诚然, 学习编程很难, 但这并不是取决于您是谁, 而是由于有太多的知识点需要学习. </p>
+<p>首先, 请接受以下即将发生的情况: 为您介绍一个对您完全没有意义的新知识点.</p>
+<p>这种情况将一遍又一遍地发生. 每次发生这种情况时, 您的处理方式将决定你的成就.</p>
+<p>如果当前你正在学习的知识点对你而言很无厘头, 请停留在当前位置, 暂不要进行下一个知识点. 重申一下, 这些知识点是循序渐进的. 略过前面的知识点无异于搭建空中楼阁.</p>
+<blockquote>
+<p><em>译者注: 我有一招从天而降的掌法, 少侠要不要学? —— emmm… 我还是先锻炼身体吧</em></p>
+</blockquote>
+<p>我发觉自己始终处于这种情况. 常常不得不多反复观看同一视频教程讲座, 以掌握所学的内容. 如果您发现自己和笔者的处境一样, 请不要气馁.</p>
+<p>如果您使用的辅导资料(或书籍)没有充分诠释该知识点, 那么务必去寻找其他适合您的资源. 没有任何理由因辅导资料所涵盖的知识点对您没有用处而放弃. 您可以在YouTube上免费找到几乎所有想要学习的内容. 找出要搜索的内容(例如, [您的编程语言]中的[知识点] +其他任何有用的关键字).</p>
+<p>如果您正在YouTube上寻找教程, 请先查看统计信息. 快速浏览评分或观看次数. 如果仍然不确定该视频是否值得花时间观看, 请阅读一些评论以了解他人的观点.</p>
+<p>很多知识点第一次见到就很无厘头, 所以, 请避免过多负面的自省. </p>
+<blockquote>
+<p><em>译者注: 意思就是不要被各种问题打击到怀疑人生, 坚持下去</em></p>
+</blockquote>
+<p>对于您学习路线经过的每一个知识点, 您需要自我反省, 其目的是在学习中去理解. 对于您涵盖的每个知识点, 问自己一些问题, 例如: </p>
+<ul>
+<li><em>“这个知识点对我有意义吗?”</em></li>
+<li><em>“有没有新的术语? 如果是这样, 是否为每个新术语提供了正式定义? ”</em></li>
+<li><em>“有没有新技能? 我了解应用程序中如何使用每种新技能吗? 我可以通过解决实践问题来验证我对这项技能的理解吗? ”</em></li>
+<li><em>“明天我会记住刚刚学到的东西吗? 后天呢? 如果没有, 我该如何将其记忆? ”</em></li>
+</ul>
+<p>最后一条建议: 永远不要低估记忆的力量. 记忆是一种在学习中没有得到充分利用的方法. 诚然, 理解一个知识点是最终目标. 但理解可能需要时间. 如果您真的很难领悟一个知识点, 请分解该知识点并记住其核心内容. 如果您不了解某件事的原理, 那么您的目标应该是背下来. 如果您需要有关如何记忆的技巧, 请考虑使用学习卡的技巧. 您可以在<a href="https://goo.gl/VqX1Dt" target="_blank" rel="noopener">Interview Prep文档中</a>阅读有关如何使用此技巧的更多信息. </p>
+<blockquote>
+<p><em>译者注: 想不通, 先记忆, 后理解.</em></p>
+</blockquote>
+<h2 id="一-计算机科学基础"><a href="#一-计算机科学基础" class="headerlink" title="一. 计算机科学基础"></a>一. 计算机科学基础</h2><p>第一步是学习计算机科学基础知识，这将在我的文章<a href="https://codeburst.io/intro-to-computer-science-terminology-f9ae64e75d27" target="_blank" rel="noopener">《Intro to Computer Science Terminology》</a>中介绍. 本文的撰写是专门针对每个人. 我特地撰写此文, 即使没有计算机背景的人都易于理解. </p>
+<p>本文涵盖的概念主要是定义性的. 您可以任意阅读这篇文章, 足够满足您的需要. 笔者建议将这些术语记住. 像在学校时那样对待每个术语, 您需要在考试中能够回忆起每个术语的定义. 如果您不想这样做, 也不必强求. 但是, 您记住的概念越多, 就越容易理解后面的知识点.</p>
+<h2 id="二-命题逻辑-可选"><a href="#二-命题逻辑-可选" class="headerlink" title="二. 命题逻辑(可选)"></a>二. 命题逻辑(可选)</h2><p>您不必具备强大的数学才能成为程序员. 数学技能可能会有所帮助, 但不是必需的. </p>
+<p>如果对自己的数学能力没有把握, 笔者建议您学习命题逻辑. 命题逻辑涵盖的原理是编程的基础. </p>
+<p>您可以从以下YouTube教程中学习命题逻辑:  <a href="https://www.youtube.com/watch?v=qV4htTfow-E&list=PL619166130C21EADA" target="_blank" rel="noopener">Basic Concepts in Propositional Logic</a>.</p>
+<h2 id="三-Java编程"><a href="#三-Java编程" class="headerlink" title="三. Java编程"></a>三. Java编程</h2><p>在学习了计算机科学的基础知识之后, 你将准备好去学习一门编程语言.</p>
+<p>无论大家的背景如何, 我精心设计一条适合多数人的学习路线. 之所以为这条路线选择Java, 是因为Java是我最有经验的语言. </p>
+<p>Java是需求最大的编程语言之一. 它被归类为一种面向对象的编程语言(稍后您将学习这意味着什么), 并且用于制作桌面、Web和移动应用程序. </p>
+<p>如果您喜欢从书中学习，我建议以下内容: <strong><em>Head First Java</em></strong>. </p>
+<p>如果您正在寻找视频教程，建议您在<em>Derek Banas</em>的Java YouTube教程: <a href="https://www.youtube.com/watch?v=TBWX97e1E9g&list=PLE7E8B7F4856C9B19" target="_blank" rel="noopener">Java Video Tutorial中</a>观看1–19、31–33、88和93. </p>
+<p>YouTube教程中的第一个视频将指导您下载一个名为<strong>Eclipse</strong>的计算机程序. Eclipse是一个<strong>集成开发环境(IDE)</strong>。您可以将<strong>IDE</strong>视为程序员专用文本编辑器的一个专业术语. 它只是一个计算机应用程序, 提供用于编程的文本编辑器以及用于运行程序的其他工具. 这是Derek Banas的有关如何下载Eclipse的YouTube视频的链接:  <a href="https://www.youtube.com/watch?v=svJQu6LUSTs&index=92&list=PLE7E8B7F4856C9B19&t=201s" target="_blank" rel="noopener">Install Eclipse for Java</a>.</p>
+<blockquote>
+<p><em>译者注: 推荐IDEA, 一个Eclipse的竞品, 目前易用性比Eclipse略高</em></p>
+</blockquote>
+<h2 id="四-算法和数据结构"><a href="#四-算法和数据结构" class="headerlink" title="四. 算法和数据结构"></a>四. 算法和数据结构</h2><p><strong>算法</strong>是用于执行特定任务的一组指令(或步骤), 其中每个步骤必须明确定义, 能够执行并且是有限的(也就是说, 它不会无限执行). </p>
+<p><strong>数据结构</strong>是组织内存中数据的一种方式. </p>
+<p>算法和数据结构是编程中最具挑战性的两个专题. 在编程中, 您<em>无需</em>将算法作为必备基础进行学习, 但如果您希望在一家知名的科技公司担任软件工程师, 那么您将在面试中表现出对算法和数据结构的理解. </p>
+<blockquote>
+<p><em>译者注: 原文作者推荐了一门99刀的课(点进去), 译者觉得挺贵的, 链接被我删了, 回家刷《算法导论》吧</em></p>
+</blockquote>
+<h2 id="五-Android开发"><a href="#五-Android开发" class="headerlink" title="五. Android开发"></a>五. Android开发</h2><p>在我看来, Android开发是Java编程最有趣的应用之一. Android应用程序主要使用Java进行编程, 因此一旦您学习Java, 就为Android学习做好了准备.</p>
+<blockquote>
+<p> <em>译者注: 目前Kotlin被Google作为首选Android开发语言</em>.</p>
+</blockquote>
+<p>这是开始学习Android极佳的免费视频教程：<a href="https://classroom.udacity.com/courses/ud834" target="_blank" rel="noopener">Udacity-Android面向初学者的开发</a>. </p>
+<p>完成上述Udacity课程后, 您将有几种选择. 以上课程应由同一团队Google员工进行扩展. 完成课程后, 其他讲座应该会显示(如果找不到, 请在Udacity上搜索). 这将是一个不错的选择, 尤其因为它是免费的. </p>
+<p>然而, 如果您愿意花钱买一本出色的书, 我强烈建议推荐: <em>《Head First Android Development：A Brain-Friendly Guide》</em>. 这本书提供的详细的解释和有用的视觉效果可以真正帮助您学习Android的思想. 每章都会引导您完成一个示例应用程序. 所有内容都使用任何人都能理解的文字和图表彻底解释. </p>
+<h2 id="有用的资源"><a href="#有用的资源" class="headerlink" title="有用的资源"></a>有用的资源</h2><p><a href="https://stackoverflow.com/" target="_blank" rel="noopener">Stack Overflow</a>是一个程序员可以在其中获得免费的代码帮助的网站. 如果您有困惑并想提出问题, 请先搜索. 如果找不到问题, 那就创建一个帐户并自己发布问题吧!</p>
+<blockquote>
+<p><em>译者注: 搜索引擎是一种工具, 寻得答案是一种能力, 提问是一种智慧.</em></p>
+<p><a href="https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/master/README-zh_CN.md" target="_blank" rel="noopener"><strong>How To Ask Questions The Smart Way</strong></a></p>
+</blockquote>
+<p>如果您对如何学习编程有任何见解, 欢迎下方留言讨论.</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#我想学习编程-但不知道从哪里开始"><span class="toc-number">1.</span> <span class="toc-text">我想学习编程, 但不知道从哪里开始</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#常常被问的问题"><span class="toc-number">1.1.</span> <span class="toc-text">常常被问的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#顶级编程语言"><span class="toc-number">1.2.</span> <span class="toc-text">顶级编程语言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何选择一门编程语言"><span class="toc-number">1.3.</span> <span class="toc-text">如何选择一门编程语言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#几句忠告"><span class="toc-number">1.4.</span> <span class="toc-text">几句忠告</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一-计算机科学基础"><span class="toc-number">1.5.</span> <span class="toc-text">一. 计算机科学基础</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二-命题逻辑-可选"><span class="toc-number">1.6.</span> <span class="toc-text">二. 命题逻辑(可选)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三-Java编程"><span class="toc-number">1.7.</span> <span class="toc-text">三. Java编程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四-算法和数据结构"><span class="toc-number">1.8.</span> <span class="toc-text">四. 算法和数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#五-Android开发"><span class="toc-number">1.9.</span> <span class="toc-text">五. Android开发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#有用的资源"><span class="toc-number">1.10.</span> <span class="toc-text">有用的资源</span></a></li></ol></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&text=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&is_video=false&description=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2019/11/how-to-learn-programming&body=Check out this article: https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&title=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&name=2019/11/how-to-learn-programming&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/11/how-to-learn-programming/&t=2019/11/how-to-learn-programming" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 朴瑞卿
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">首页</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="/archives/">归档</a></li>
+         
+          <li><a href="https://blog.piaoruiqing.com" target="_blank" rel="noopener">项目</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+
+    <!-- jquery -->
+
+<script src="/lib/jquery/jquery.min.js"></script>
+
+
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+
+<!-- clipboard -->
+
+  
+<script src="/lib/clipboard/clipboard.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>
