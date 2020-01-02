@@ -6,12 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <meta name="description" content="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ? 由Content-Length导致的问题引发的一系列思考:前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后Content-Length与实际不一致导致的问题, 故有此文. 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blo">
+    <meta name="description" content="由Content-Length导致的问题引发的一系列思考:前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后Content-Length与实际不一致导致的问题, 故有此文. 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blog&#x2F;2019&#x2F;09&#x2F;08&#x2F;你是否了解content-length&#x2F;  前言Content-Lengt">
 <meta property="og:type" content="article">
-<meta property="og:title" content="2019&#x2F;08&#x2F;do-you-know-content-length">
+<meta property="og:title" content="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?">
 <meta property="og:url" content="https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/index.html">
 <meta property="og:site_name" content="草堂笺 - 朴瑞卿的博客">
-<meta property="og:description" content="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ? 由Content-Length导致的问题引发的一系列思考:前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后Content-Length与实际不一致导致的问题, 故有此文. 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blo">
+<meta property="og:description" content="由Content-Length导致的问题引发的一系列思考:前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后Content-Length与实际不一致导致的问题, 故有此文. 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;blog&#x2F;2019&#x2F;09&#x2F;08&#x2F;你是否了解content-length&#x2F;  前言Content-Lengt">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length-request.jpg">
 <meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-content-length.jpg">
@@ -26,7 +26,7 @@
 <meta property="og:image" content="https://img.piaoruiqing.com/blog//2019-09-08-chunked-wireshark1.jpg">
 <meta property="og:image" content="https://img.piaoruiqing.com/blog/2019-09-08-chunked.jpg">
 <meta property="article:published_time" content="2019-09-08T14:40:41.000Z">
-<meta property="article:modified_time" content="2019-09-08T14:40:41.000Z">
+<meta property="article:modified_time" content="2020-01-02T11:39:32.178Z">
 <meta property="article:author" content="朴瑞卿">
 <meta property="article:tag" content="草堂笺">
 <meta property="article:tag" content="朴瑞卿">
@@ -53,7 +53,7 @@
         
     
     <!-- title -->
-    <title>2019/08/do-you-know-content-length</title>
+    <title>用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</title>
     <!-- styles -->
     
 <link rel="stylesheet" href="/css/style.css">
@@ -110,21 +110,21 @@
     <div id="share" style="display: none">
       <ul>
   <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/" target="_blank" rel="noopener"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&text=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&is_video=false&description=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=2019/08/do-you-know-content-length&body=Check out this article: https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&name=2019/08/do-you-know-content-length&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&t=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&text=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&is_video=false&description=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?&body=Check out this article: https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&name=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&t=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
     <div id="toc">
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding"><span class="toc-number">1.</span> <span class="toc-text">用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Content-Length"><span class="toc-number">1.2.</span> <span class="toc-text">什么是Content-Length</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length是如何工作的"><span class="toc-number">1.2.1.</span> <span class="toc-text">Content-Length是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-gt-实际长度"><span class="toc-number">1.2.2.</span> <span class="toc-text">Content-Length &gt; 实际长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-lt-实际长度"><span class="toc-number">1.2.3.</span> <span class="toc-text">Content-Length &lt; 实际长度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不确定Content-Length的值怎么办"><span class="toc-number">1.3.</span> <span class="toc-text">不确定Content-Length的值怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Transfer-Encoding-chunked"><span class="toc-number">1.4.</span> <span class="toc-text">什么是Transfer-Encoding: chunked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Transfer-Encoding-chunked是如何工作的"><span class="toc-number">1.4.1.</span> <span class="toc-text">Transfer-Encoding: chunked是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">1.6.</span> <span class="toc-text">参考文献</span></a></li></ol></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Content-Length"><span class="toc-number">2.</span> <span class="toc-text">什么是Content-Length</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length是如何工作的"><span class="toc-number">2.1.</span> <span class="toc-text">Content-Length是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-gt-实际长度"><span class="toc-number">2.2.</span> <span class="toc-text">Content-Length &gt; 实际长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-lt-实际长度"><span class="toc-number">2.3.</span> <span class="toc-text">Content-Length &lt; 实际长度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不确定Content-Length的值怎么办"><span class="toc-number">3.</span> <span class="toc-text">不确定Content-Length的值怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Transfer-Encoding-chunked"><span class="toc-number">4.</span> <span class="toc-text">什么是Transfer-Encoding: chunked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Transfer-Encoding-chunked是如何工作的"><span class="toc-number">4.1.</span> <span class="toc-text">Transfer-Encoding: chunked是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">6.</span> <span class="toc-text">参考文献</span></a></li></ol>
     </div>
   </span>
 </div>
@@ -136,7 +136,7 @@
   <header>
     
     <h1 class="posttitle" itemprop="name headline">
-        2019/08/do-you-know-content-length
+        用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?
     </h1>
 
 
@@ -163,7 +163,7 @@
   
 
   <div class="content" itemprop="articleBody">
-    <h1 id="用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding"><a href="#用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding" class="headerlink" title="用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?"></a>用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</h1><blockquote>
+    <blockquote>
 <p>由Content-Length导致的问题引发的一系列思考:<br>前段时间开发API网关, 使用postman调试时出现了超时的情况, 经排查确定是请求数据被处理后<code>Content-Length</code>与实际不一致导致的问题, 故有此文.</p>
 <p>文章地址: <a href="https://blog.piaoruiqing.com/blog/2019/09/08/你是否了解content-length/" target="_blank" rel="noopener">https://blog.piaoruiqing.com/blog/2019/09/08/你是否了解content-length/</a></p>
 </blockquote>
@@ -234,22 +234,22 @@
     </div>
 
     <div id="toc-footer" style="display: none">
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#用了这么久HTTP-你是否了解Content-Length和Transfer-Encoding"><span class="toc-number">1.</span> <span class="toc-text">用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Content-Length"><span class="toc-number">1.2.</span> <span class="toc-text">什么是Content-Length</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length是如何工作的"><span class="toc-number">1.2.1.</span> <span class="toc-text">Content-Length是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-gt-实际长度"><span class="toc-number">1.2.2.</span> <span class="toc-text">Content-Length &gt; 实际长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-lt-实际长度"><span class="toc-number">1.2.3.</span> <span class="toc-text">Content-Length &lt; 实际长度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不确定Content-Length的值怎么办"><span class="toc-number">1.3.</span> <span class="toc-text">不确定Content-Length的值怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Transfer-Encoding-chunked"><span class="toc-number">1.4.</span> <span class="toc-text">什么是Transfer-Encoding: chunked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Transfer-Encoding-chunked是如何工作的"><span class="toc-number">1.4.1.</span> <span class="toc-text">Transfer-Encoding: chunked是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">1.5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">1.6.</span> <span class="toc-text">参考文献</span></a></li></ol></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Content-Length"><span class="toc-number">2.</span> <span class="toc-text">什么是Content-Length</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length是如何工作的"><span class="toc-number">2.1.</span> <span class="toc-text">Content-Length是如何工作的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-gt-实际长度"><span class="toc-number">2.2.</span> <span class="toc-text">Content-Length &gt; 实际长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Content-Length-lt-实际长度"><span class="toc-number">2.3.</span> <span class="toc-text">Content-Length &lt; 实际长度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#不确定Content-Length的值怎么办"><span class="toc-number">3.</span> <span class="toc-text">不确定Content-Length的值怎么办</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是Transfer-Encoding-chunked"><span class="toc-number">4.</span> <span class="toc-text">什么是Transfer-Encoding: chunked</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Transfer-Encoding-chunked是如何工作的"><span class="toc-number">4.1.</span> <span class="toc-text">Transfer-Encoding: chunked是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-number">6.</span> <span class="toc-text">参考文献</span></a></li></ol>
     </div>
 
     <div id="share-footer" style="display: none">
       <ul>
   <li><a class="icon" href="http://www.facebook.com/sharer.php?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/" target="_blank" rel="noopener"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&text=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&is_video=false&description=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="mailto:?subject=2019/08/do-you-know-content-length&body=Check out this article: https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&name=2019/08/do-you-know-content-length&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
-  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&t=2019/08/do-you-know-content-length" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&text=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&is_video=false&description=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?&body=Check out this article: https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&title=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&name=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?&description=" target="_blank" rel="noopener"><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=https://blog.piaoruiqing.cn/2019/08/do-you-know-content-length/&t=用了这么久HTTP, 你是否了解Content-Length和Transfer-Encoding ?" target="_blank" rel="noopener"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
 </ul>
 
     </div>
