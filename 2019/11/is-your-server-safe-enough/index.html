@@ -13,19 +13,19 @@
 <meta property="og:site_name" content="草堂笺 - 朴瑞卿的网络日志(备份站)">
 <meta property="og:description" content="一份不一定很全的服务器安全防范措施, 但值得看看.  (╯-_-)╯~╩╩.  文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;2019&#x2F;11&#x2F;24&#x2F;is-your-server-safe-enough&#x2F;  前言近期服务器经常被暴力扫描、攻击, 故周末花时间打理下服务器, 将一些可能存在的风险处理掉. 笔者根据实践总结出一份简单的防范措施列表, 希望能对你有帮助.  阅读本">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-2.jpg">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-3.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-2.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-3.jpg">
 <meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/business_card.jpg">
 <meta property="article:published_time" content="2019-11-24T14:27:52.000Z">
-<meta property="article:modified_time" content="2020-01-02T11:38:46.596Z">
+<meta property="article:modified_time" content="2021-08-08T13:08:47.140Z">
 <meta property="article:author" content="朴瑞卿">
 <meta property="article:tag" content="草堂笺">
 <meta property="article:tag" content="朴瑞卿">
 <meta property="article:tag" content="朴瑞卿的博客">
 <meta property="article:tag" content="技术博客">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg">
+<meta name="twitter:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg">
     
     
         
@@ -167,14 +167,14 @@
 </ul>
 <h2 id="一-防火墙"><a href="#一-防火墙" class="headerlink" title="一. 防火墙"></a>一. 防火墙</h2><p>防火墙采用白名单策略, 只开放必要端口. 如: 80/443以及ssh登录端口.</p>
 <p>而数据库、缓存等端口, 最好只允许本地访问, 若需要调试, 建议使用白名单IP、代理等方法进行连接.</p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg" alt="80-443"></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11//2019-11-24-server-safe-1.jpg" alt="80-443"></p>
 <h2 id="二-利用内网穿透工具"><a href="#二-利用内网穿透工具" class="headerlink" title="二. 利用内网穿透工具"></a>二. 利用内网穿透工具</h2><blockquote>
 <p>参考文档: <a href="https://github.com/fatedier/frp/" target="_blank" rel="noopener">https://github.com/fatedier/frp/</a></p>
 </blockquote>
 <p>对于有调试需求的服务器而言, 数据库、缓存、消息队列等端口需要开放. 而直接开放端口会给服务器带来不必要的安全隐患. 此时我们必须对访问者进行限制, 如: IP白名单、VPN等. 除此之外, 笔者推荐一个内网穿透工具用来辅助建立调试环境 —— <a href="https://github.com/fatedier/frp" target="_blank" rel="noopener">FRP</a></p>
 <p>FRP是一个可用于内网穿透的高性能的反向代理应用, 有多种穿透方式, 可以指定端口进行代理. 我们可以在服务器启动服务端(frps)和客户端(frpc)两个服务, 本地客户端的frpc通过frps监听的唯一端口与服务端的frpc建立连接, 这样就能将服务器上只能内部访问的端口映射到开发者电脑本地端口. </p>
 <p>使用FRP的优势: 指定端口、可压缩流量、可加密、服务端只需要暴露frps的端口.</p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-2.jpg" alt="frps-frpc"></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-2.jpg" alt="frps-frpc"></p>
 <h2 id="三-隐藏无用信息"><a href="#三-隐藏无用信息" class="headerlink" title="三. 隐藏无用信息"></a>三. 隐藏无用信息</h2><blockquote>
 <p>参考文档: </p>
 <p><a href="http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header" target="_blank" rel="noopener">1). http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header</a></p>
@@ -182,7 +182,7 @@
 <p><a href="http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html#fastcgi_hide_header" target="_blank" rel="noopener">3. http://nginx.org/en/docs/http/ngx_http_fastcgi_module.html#fastcgi_hide_header</a></p>
 </blockquote>
 <p>通过服务器返回的信息, 攻击者能从中发现一些漏洞, 比如nginx版本、所使用的web服务器等. 而这些信息对于用户来说都是非必要的. 笔者随便找了个网站查看, 如图: </p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-3.jpg" alt=""></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-24-server-safe-3.jpg" alt=""></p>
 <p>这些细节都可能为攻击者提供途径. 所以有必要屏蔽掉这些信息. </p>
 <ol>
 <li><a href="http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header" target="_blank" rel="noopener">proxy_hide_header {Your-Header}</a>: nginx中, 通过<strong>proxy_hide_header</strong>可以隐藏掉上游服务返回的某些header.</li>
@@ -302,7 +302,7 @@
         
         <footer id="footer">
   <div class="footer-left">
-    Copyright &copy; 2020 朴瑞卿
+    Copyright &copy; 2021 朴瑞卿
   </div>
   <div class="footer-right">
     <nav>

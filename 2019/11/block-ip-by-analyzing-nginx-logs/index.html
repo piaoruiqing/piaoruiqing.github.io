@@ -13,19 +13,19 @@
 <meta property="og:site_name" content="草堂笺 - 朴瑞卿的网络日志(备份站)">
 <meta property="og:description" content="实时采集并分析Nginx日志, 自动化封禁风险IP方案 文章地址: https:&#x2F;&#x2F;blog.piaoruiqing.com&#x2F;2019&#x2F;11&#x2F;17&#x2F;block-ip-by-analyzing-nginx-logs&#x2F;  [toc] 前言本文分享了自动化采集、分析Nginx日志并实时封禁风险IP的方案及实践.  阅读这篇文章你能收获到:   日志采集方案. 风险IP评估的简单方案. IP封禁策略及方">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-2.jpg">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-3.jpg">
-<meta property="og:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-4.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-2.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-3.jpg">
+<meta property="og:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-4.jpg">
 <meta property="article:published_time" content="2019-11-24T03:41:07.000Z">
-<meta property="article:modified_time" content="2020-01-02T11:39:12.583Z">
+<meta property="article:modified_time" content="2021-08-08T13:08:56.383Z">
 <meta property="article:author" content="朴瑞卿">
 <meta property="article:tag" content="草堂笺">
 <meta property="article:tag" content="朴瑞卿">
 <meta property="article:tag" content="朴瑞卿的博客">
 <meta property="article:tag" content="技术博客">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg">
+<meta name="twitter:image" content="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg">
     
     
         
@@ -175,7 +175,7 @@
 </ul>
 <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>分析nginx访问日志时, 看到大量404的无效请求, URL都是随机的一些敏感词. 而且近期这些请求越来越频繁, 手动批量封禁了一些IP后, 很快就有新的IP进来. </p>
 <p>因此萌生了通过自动化分析Nginx日志实时封禁IP的想法.</p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg" alt="nginx-404-accesslog"></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-1.jpg" alt="nginx-404-accesslog"></p>
 <h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><table>
 <thead>
 <tr>
@@ -277,7 +277,7 @@
 </li>
 </ul>
 <p>部署成功后查看redis数据: </p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-2.jpg" alt="accesslog-in-redis"></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-2.jpg" alt="accesslog-in-redis"></p>
 <h3 id="风险评估-1"><a href="#风险评估-1" class="headerlink" title="风险评估"></a>风险评估</h3><p><code>Monitor</code>服务使用Java编写, 使用docker部署, 与<code>Actuator</code>服务通过http交互.</p>
 <p>风险评估需要综合多个维度: </p>
 <table>
@@ -316,7 +316,7 @@
 </tbody></table>
 <h4 id="获取IP归属地"><a href="#获取IP归属地" class="headerlink" title="获取IP归属地"></a>获取IP归属地</h4><p>IP归属地获取比较容易, 有不少数据服务网站提供了免费套餐, 如<a href="https://ipinfo.io/" target="_blank" rel="noopener">IpInfo</a>等. 也有免费版IP数据库可以下载如<a href="https://lite.ip2location.com/" target="_blank" rel="noopener">ip2location</a>等.</p>
 <p>笔者使用了<a href="https://lite.ip2location.com/" target="_blank" rel="noopener">ip2location</a>的免费版数据库: </p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-3.jpg" alt="ip2location"></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-3.jpg" alt="ip2location"></p>
 <p><strong>ip_from</strong>和<strong>ip_to</strong>是IP段起止, 存储的格式是十进制, MySQL中可通过<code>inet_aton(&#39;your ip&#39;)</code>函数将IP转为十进制. 如: </p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> @a:= <span class="keyword">inet_aton</span>(<span class="string">'172.217.6.78'</span>);</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ip2location_db11 <span class="keyword">WHERE</span> ip_from &lt;= @a <span class="keyword">AND</span> ip_to &gt;= @a <span class="keyword">LIMIT</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
 
@@ -494,7 +494,7 @@
 <li><strong>timeout</strong>: 超时时间, 单位: 秒.</li>
 </ul>
 <p>目前, 还是有不少”头铁”的IP频繁扫描笔者的网站, 在发现后几秒内自动屏蔽掉, 目前效果比较理想.</p>
-<p><img src="https://i.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-4.jpg" alt="violation-ticket-list"></p>
+<p><img src="https://g.cdn.piaoruiqing.cn/image/article/2019/11/2019-11-16-monitor-4.jpg" alt="violation-ticket-list"></p>
 <h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><ul>
 <li>爬虫、机器人、漏洞扫描等给网站造成了不必要的开销甚至带来风险, 不可忽视. 绝对安全很难做到, 但至少可以做到比别人安全. </li>
 <li>封禁是相对暴力的手段, 一定要把握好尺度, 出现误杀会导致网站流失用户. </li>
@@ -559,7 +559,7 @@
         
         <footer id="footer">
   <div class="footer-left">
-    Copyright &copy; 2020 朴瑞卿
+    Copyright &copy; 2021 朴瑞卿
   </div>
   <div class="footer-right">
     <nav>
